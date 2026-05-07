@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대광그룹 부동산 일일 동향 AI 브리핑</title>
+    <meta name="description" content="대광그룹 주택관리팀 AI 기반 부동산 시장 일일 동향 심층 분석 브리핑 시스템">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       디자인 토큰 & 리셋
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        :root {
+            --navy-900: #060F20;
+            --navy-800: #0A1628;
+            --navy-700: #0D1F3C;
+            --navy-600: #1B365D;
+            --navy-500: #264D85;
+            --navy-400: #3A6BAD;
+            --gold-500: #C9A84C;
+            --gold-400: #DDB96A;
+            --gold-300: #EDD090;
+            --slate-100: #F4F7FB;
+            --slate-200: #E8EDF5;
+            --slate-300: #D0DAF0;
+            --text-primary: #0A1628;
+            --text-secondary: #4A5568;
+            --text-muted: #8892A4;
+            --white: #FFFFFF;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 22px;
+            --shadow-sm: 0 1px 4px rgba(10, 22, 40, 0.08);
+            --shadow-md: 0 4px 16px rgba(10, 22, 40, 0.12);
+            --shadow-lg: 0 8px 32px rgba(10, 22, 40, 0.18);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background: linear-gradient(145deg, #060F20 0%, #0D1F3C 40%, #0A1628 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       레이아웃
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .page-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       사이트 헤더
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .site-header {
+            text-align: center;
+            padding: 40px 0 32px;
+            animation: fadeDown 0.6s ease both;
+        }
+
+        .site-header .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(201, 168, 76, 0.12);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gold-400);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .site-header h1 {
+            font-size: clamp(24px, 4vw, 34px);
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .site-header h1 span {
+            color: var(--gold-400);
+        }
+
+        .site-header .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       카드 공통
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-600) 100%);
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header .icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(201, 168, 76, 0.15);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .card-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .card-header p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .card-body {
+            padding: 28px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       폼 컨트롤
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="time"] {
+            height: 42px;
+            padding: 0 14px;
+            border: 1.5px solid var(--slate-300);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: var(--transition);
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--navy-500);
+            box-shadow: 0 0 0 3px rgba(38, 77, 133, 0.1);
+        }
+
+        input::placeholder {
+            color: #BCC4D0;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon input {
+            padding-right: 40px;
+        }
+
+        .input-with-icon .eye-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .input-with-icon .eye-toggle:hover {
+            opacity: 1;
+        }
+
+        .input-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* 섹션 구분선 */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0 16px;
+        }
+
+        .section-divider span {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--navy-600);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--slate-200);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       버튼
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 24px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            outline: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--navy-600) 0%, var(--navy-500) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 14px rgba(27, 54, 93, 0.35);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--navy-500) 0%, var(--navy-400) 100%);
+            box-shadow: 0 6px 20px rgba(27, 54, 93, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #E67E22 0%, #F39C12 100%);
+            color: var(--white);
+            box-shadow: 0 4px 14px rgba(230, 126, 34, 0.35);
+        }
+
+        .btn-accent:hover:not(:disabled) {
+            background: linear-gradient(135deg, #D35400 0%, #E67E22 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent.active {
+            background: linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);
+            box-shadow: 0 4px 14px rgba(192, 57, 43, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--navy-600);
+            border: 1.5px solid var(--slate-300);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--slate-100);
+            border-color: var(--navy-500);
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        .btn.loading .spinner {
+            display: block;
+        }
+
+        .btn.loading .btn-text {
+            display: none;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       상태 배너
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 16px;
+            transition: var(--transition);
+        }
+
+        .status-bar.idle {
+            background: #F0F4FF;
+            color: #4A5568;
+            border: 1px solid #D0DAF0;
+        }
+
+        .status-bar.active {
+            background: #EBF8FF;
+            color: #1A5276;
+            border: 1px solid #A9D0EC;
+        }
+
+        .status-bar.success {
+            background: #F0FFF4;
+            color: #1A6B3C;
+            border: 1px solid #A8D5B8;
+        }
+
+        .status-bar.error {
+            background: #FFF5F5;
+            color: #9B2335;
+            border: 1px solid #F5ABAB;
+        }
+
+        .status-bar .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-bar.idle .pulse {
+            background: #A0ADB8;
+        }
+
+        .status-bar.active .pulse {
+            background: #3498DB;
+            animation: pulse 1.2s ease infinite;
+        }
+
+        .status-bar.success .pulse {
+            background: #2ECC71;
+        }
+
+        .status-bar.error .pulse {
+            background: #E74C3C;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       진행 로그
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .log-panel {
+            background: var(--navy-900);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            margin-top: 16px;
+            max-height: 160px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .log-panel.visible {
+            display: block;
+        }
+
+        .log-line {
+            font-size: 12px;
+            color: #8892A4;
+            font-family: 'Consolas', monospace;
+            padding: 2px 0;
+            line-height: 1.7;
+        }
+
+        .log-line.highlight {
+            color: var(--gold-400);
+        }
+
+        .log-line.success {
+            color: #2ECC71;
+        }
+
+        .log-line.error {
+            color: #E74C3C;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       결과 카드 (보고서)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        #result-card {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #result-card.visible {
+            display: block;
+        }
+
+        /* 보고서 헤더 */
+        .report-masthead {
+            background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%);
+            padding: 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-masthead::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(201, 168, 76, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .report-masthead .brand-line {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--gold-500);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .report-masthead .report-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--white);
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .report-masthead .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .report-masthead .meta-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 11px;
+            color: #A0ADB8;
+        }
+
+        .report-masthead .meta-badge strong {
+            color: var(--white);
+        }
+
+        /* KPI 바 */
+        .kpi-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            background: var(--slate-100);
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .kpi-item {
+            padding: 18px;
+            text-align: center;
+            border-right: 1px solid var(--slate-200);
+        }
+
+        .kpi-item:last-child {
+            border-right: none;
+        }
+
+        .kpi-item .kpi-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--navy-700);
+            line-height: 1;
+        }
+
+        .kpi-item .kpi-val.gold {
+            color: var(--gold-500);
+        }
+
+        .kpi-item .kpi-lbl {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
+        }
+
+        /* 보고서 본문 */
+        .report-body {
+            padding: 32px;
+        }
+
+        .report-section {
+            margin-bottom: 32px;
+        }
+
+        .report-section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 섹션 1: Today's Main Briefing — 음영 박스 */
+        .briefing-box {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-300);
+            border-left: 4px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            padding: 22px 24px;
+        }
+
+        .briefing-box p {
+            font-size: 14px;
+            line-height: 1.95;
+            color: var(--text-primary);
+        }
+
+        /* 섹션 제목 */
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-heading .num-badge {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--navy-600), var(--navy-500));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--white);
+            flex-shrink: 0;
+        }
+
+        .section-heading h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--navy-700);
+        }
+
+        .section-heading .gold-line {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold-500), transparent);
+        }
+
+        /* 일반 본문 텍스트 */
+        .report-text {
+            font-size: 13.5px;
+            line-height: 2;
+            color: var(--text-secondary);
+        }
+
+        .report-text strong {
+            color: var(--navy-700);
+            font-weight: 700;
+        }
+
+        .report-text .indent {
+            padding-left: 16px;
+            border-left: 2px solid var(--slate-300);
+            margin: 6px 0;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       뉴스 목록 탭
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .news-section {
+            padding: 0 32px 32px;
+        }
+
+        .news-section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--navy-700);
+            border-bottom: 2px solid var(--slate-200);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .news-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .news-tab {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--slate-300);
+            background: var(--white);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .news-tab.active {
+            background: var(--navy-700);
+            border-color: var(--navy-700);
+            color: var(--white);
+        }
+
+        .news-panel {
+            display: none;
+        }
+
+        .news-panel.active {
+            display: block;
+        }
+
+        .news-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--slate-200);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-cat-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .news-cat-pill.cat0 {
+            background: #EBF5FB;
+            color: #1A5276;
+        }
+
+        .news-cat-pill.cat1 {
+            background: #FEF9E7;
+            color: #7D6608;
+        }
+
+        .news-cat-pill.cat2 {
+            background: #EAFAF1;
+            color: #1D6340;
+        }
+
+        .news-item a {
+            font-size: 13px;
+            color: var(--navy-600);
+            text-decoration: none;
+            line-height: 1.55;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .news-item a:hover {
+            color: var(--navy-400);
+            text-decoration: underline;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       액션 바 (보고서 하단)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .report-action-bar {
+            padding: 20px 32px 28px;
+            border-top: 1px solid var(--slate-200);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       이메일 모달
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 15, 32, 0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--navy-800), var(--navy-600));
+            padding: 22px 28px;
+        }
+
+        .modal-header h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .modal-header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .modal-body {
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-footer {
+            padding: 16px 28px 24px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid var(--slate-200);
+        }
+
+        .modal-footer .btn {
+            height: 42px;
+            font-size: 13px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       ECOS 금리 대시보드
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .ecos-section {
+            padding: 0 32px 32px;
+            display: none;
+        }
+
+        .ecos-section.visible {
+            display: block;
+        }
+
+        .ecos-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 0 12px;
+            border-bottom: 2px solid var(--slate-200);
+            margin-bottom: 18px;
+        }
+
+        .ecos-header-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--navy-700);
+        }
+
+        .ecos-live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #E8F8EE;
+            border: 1px solid #A8D5B8;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #1A6B3C;
+            letter-spacing: 0.5px;
+        }
+
+        .ecos-live-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #2ECC71;
+            border-radius: 50%;
+            animation: pulse 1.5s ease infinite;
+        }
+
+        .ecos-fetched-at {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* 금리 카드 그리드 */
+        .rate-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .rate-card {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            border-radius: var(--radius-md);
+            padding: 14px 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--navy-600), var(--navy-400));
+        }
+
+        .rate-card.csi-card::before {
+            background: linear-gradient(90deg, #8E44AD, #9B59B6);
+        }
+
+        .rate-card .rc-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+        }
+
+        .rate-card .rc-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--navy-700);
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1;
+        }
+
+        .rate-card .rc-unit {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        .rate-card .rc-date {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .rate-card .rc-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .rate-card .rc-na {
+            font-size: 14px;
+            font-weight: 600;
+            color: #CBD5E0;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* CSI 카드 행 */
+        .csi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .csi-value-num {
+            font-size: 20px;
+            font-weight: 800;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--navy-700);
+            line-height: 1;
+        }
+
+        .csi-value-num.above100 {
+            color: #1A6B3C;
+        }
+
+        .csi-value-num.below100 {
+            color: #C0392B;
+        }
+
+        /* 트렌드 테이블 */
+        .trend-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .trend-table th {
+            background: var(--navy-800);
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .trend-table th:first-child {
+            text-align: left;
+            border-radius: 6px 0 0 0;
+        }
+
+        .trend-table th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+
+        .trend-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--slate-200);
+            text-align: center;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .trend-table td:first-child {
+            text-align: left;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 600;
+            color: var(--navy-700);
+        }
+
+        .trend-table tr:nth-child(even) td {
+            background: var(--slate-100);
+        }
+
+        .trend-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .delta-up {
+            color: #C0392B;
+            font-weight: 700;
+        }
+
+        .delta-down {
+            color: #1A6B3C;
+            font-weight: 700;
+        }
+
+        .delta-flat {
+            color: var(--text-muted);
+        }
+
+        /* DSR 추산 행 */
+        .dsr-row {
+            background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            display: grid;
+            grid-template-columns: auto 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .dsr-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gold-400);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .dsr-cell {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            text-align: center;
+        }
+
+        .dsr-cell .dsr-val {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--white);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .dsr-cell .dsr-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       애니메이션
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       반응형
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-strip {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-item {
+                border-right: none;
+                border-bottom: 1px solid var(--slate-200);
+            }
+
+            .btn-row {
+                flex-direction: column;
+            }
+
+            .report-masthead,
+            .report-body,
+            .report-action-bar,
+            .news-section,
+            .ecos-section {
+                padding: 20px;
+            }
+
+            .rate-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .csi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dsr-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     이메일 발송 모달
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📧 이메일로 브리핑 발송</h3>
+                <p>구글 계정을 사용하여 발송됩니다. SMTP 설정 불필요.</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>발송인 이름</label>
+                    <input type="text" id="modal-sender" placeholder="대광건영 주택관리팀 강인구" value="대광건영 주택관리팀 강인구">
+                </div>
+                <div class="form-group">
+                    <label>수신자 이메일 (콤마 또는 세미콜론으로 구분)</label>
+                    <input type="text" id="modal-recipients" placeholder="hong@example.com, kim@example.com">
+                    <span class="input-hint">여러 명에게 동시 발송 가능합니다.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modal-cancel-btn" onclick="closeEmailModal()">취소</button>
+                <button class="btn btn-primary" id="modal-send-btn" onclick="doSendEmail()">
+                    <span class="spinner"></span>
+                    <span class="btn-text">📤 발송하기</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     사이트 헤더
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div class="page-wrapper">
+        <header class="site-header">
+            <div class="brand-badge">🏢 Daekwang Group · AI Intelligence</div>
+            <h1>부동산 동향 <span>일일 AI 브리핑</span></h1>
+            <p class="subtitle">Google News RSS × Gemini AI — 디벨로퍼 맞춤형 심층 분석 자동화 시스템</p>
+        </header>
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       설정 카드
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+                <div class="icon">⚙️</div>
+                <div>
+                    <h2>실행 설정</h2>
+                    <p>API 키 및 분석 옵션을 설정하세요</p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label>🤖 AI 모델 선택</label>
+                        <select id="ai-model"
+                            style="height: 42px; padding: 0 14px; border: 1.5px solid var(--slate-300); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; color: var(--text-primary); background: var(--white); outline: none; margin-bottom: 12px; width: 100%;">
+                            <option value="gemini">Google Gemini 2.5 Flash (무료 가능)</option>
+                            <option value="openai">OpenAI GPT-4o</option>
+                            <option value="claude">Anthropic Claude Opus 4.7</option>
+                            <option value="grok">xAI Grok-3</option>
+                            <option value="mistral">Mistral Large</option>
+                            <option value="perplexity">Perplexity Sonar Pro</option>
+                            <option value="github">GitHub AI (Azure) — gpt-4o-mini / DeepSeek-R1 / Llama (Rate limit 폴백)
+                            </option>
+                            <option value="cohere">Cohere Command A (2025)</option>
+                            <option value="openrouter">OpenRouter — Llama 4 / Qwen3 / Gemma 3 (무료 폴백)</option>
+                        </select>
+                        <label>🔑 API 키 (선택한 모델용)</label>
+                        <div class="input-with-icon">
+                            <input type="password" id="api-key" placeholder="여기에 API 키를 입력하세요">
+                            <span class="eye-toggle" onclick="togglePw('api-key', this)">👁️</span>
+                        </div>
+                        <span class="input-hint">선택한 AI 모델의 API 키를 입력하세요.</span>
+                    </div>
+                    <div class="form-group full">
+                        <label>🎯 오늘의 중점 분석 (선택)</label>
+                        <input type="text" id="focus-point" placeholder="예: 평택 8월 입주장 잔금 대출 리스크, 양주 회천/송도 신규 사업지 등">
+                        <span class="input-hint">비워두면 오늘 수집된 기사 전반을 균형있게 분석합니다.</span>
+                    </div>
+                    <div class="form-group full">
+                        <label>🏦 한국은행 ECOS API 키 (선택 — 금리·CSI 연동)</label>
+                        <div class="input-with-icon">
+                            <input type="password" id="ecos-key" placeholder="ecos.bok.or.kr에서 발급된 API 키 (선택사항)">
+                            <span class="eye-toggle" onclick="togglePw('ecos-key', this)">👁️</span>
+                        </div>
+                        <span class="input-hint">입력 시 주담대·기준금리·국고채·CSI 등 11개 실시간 지표를 AI 분석에 통합합니다. 미입력 시 뉴스 기반 분석만
+                            수행합니다.</span>
+                    </div>
+                    <div class="form-group full" style="margin-top: 16px;">
+                        <label>🔒 시스템 접근 비밀번호</label>
+                        <div class="input-with-icon">
+                            <input type="password" id="sys-pwd" placeholder="분석 실행을 위한 비밀번호를 입력하세요">
+                            <span class="eye-toggle" onclick="togglePw('sys-pwd', this)">👁️</span>
+                        </div>
+                        <span class="input-hint">실행 권한 확인을 위해 비밀번호를 입력해주세요.</span>
+                    </div>
+                </div>
+
+                <div class="section-divider"><span>⏰ 자동 스케줄러</span></div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>자동 실행 시간</label>
+                        <input type="time" id="sched-time" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label>스케줄러 발송인 이름</label>
+                        <input type="text" id="sched-sender" placeholder="대광건영 주택관리팀 강인구" value="대광건영 주택관리팀 강인구">
+                    </div>
+                    <div class="form-group full">
+                        <label>스케줄러 자동 발송 수신자</label>
+                        <input type="text" id="sched-recipients" placeholder="hong@example.com, kim@example.com">
+                        <span class="input-hint">비워두면 자동 실행 시 이메일을 발송하지 않습니다.</span>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="run-btn" onclick="runBriefing()">
+                        <span class="spinner"></span>
+                        <span class="btn-text">▶&nbsp; 지금 바로 분석 실행</span>
+                    </button>
+                    <button class="btn btn-accent" id="sched-btn" onclick="toggleScheduler()">
+                        <span class="btn-text">⏰&nbsp; 자동 스케줄러 ON</span>
+                    </button>
+                </div>
+
+                <!-- 상태 배너 -->
+                <div class="status-bar idle" id="status-bar">
+                    <div class="pulse"></div>
+                    <span id="status-text">대기 중 — 설정 후 실행 버튼을 누르세요.</span>
+                </div>
+
+                <!-- 진행 로그 -->
+                <div class="log-panel" id="log-panel"></div>
+            </div>
+        </div>
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       결과 카드
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <div class="card" id="result-card">
+
+            <!-- 보고서 마스트헤드 -->
+            <div class="report-masthead">
+                <div class="brand-line">Daekwang Group · AI Market Intelligence · Housing Management Team</div>
+                <div class="report-title">📊 부동산 동향 일일 브리핑</div>
+                <div class="meta-row">
+                    <div class="meta-badge">📅 <strong id="rpt-date">—</strong></div>
+                    <div class="meta-badge">📰 수집 기사 <strong id="rpt-count">—</strong>건</div>
+                    <div class="meta-badge" id="rpt-model">🤖 AI 분석</div>
+                    <div class="meta-badge" id="rpt-ecos-badge" style="display:none;">🏦 ECOS 연동</div>
+                </div>
+            </div>
+
+            <!-- KPI 요약 스트립 -->
+            <div class="kpi-strip" style="grid-template-columns:repeat(4,1fr);">
+                <div class="kpi-item">
+                    <div class="kpi-val" id="kpi-cat1">0</div>
+                    <div class="kpi-lbl">정책/세금 뉴스</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-val" id="kpi-cat2">0</div>
+                    <div class="kpi-lbl">분양/청약 뉴스</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-val gold" id="kpi-cat3">0</div>
+                    <div class="kpi-lbl">시장동향 뉴스</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-val gold" id="kpi-ecos" style="font-size:20px;">—</div>
+                    <div class="kpi-lbl">주담대 금리 (ECOS)</div>
+                </div>
+            </div>
+
+            <!-- AI 분석 보고서 본문 -->
+            <div class="report-body" id="report-body"></div>
+
+            <!-- ECOS 금리·CSI 대시보드 -->
+            <div class="ecos-section" id="ecos-section">
+                <div class="ecos-header">
+                    <span class="ecos-header-title">📊 한국은행 ECOS 실시간 금리 &amp; 심리지표</span>
+                    <span class="ecos-live-badge">LIVE DATA</span>
+                    <span class="ecos-fetched-at" id="ecos-fetched-at"></span>
+                </div>
+                <!-- 금리 카드 그리드 (8개) -->
+                <div class="rate-grid" id="rate-grid"></div>
+                <!-- CSI 3종 -->
+                <div class="csi-grid" id="csi-grid"></div>
+                <!-- 트렌드 테이블 -->
+                <div style="overflow-x:auto; margin-bottom:16px;">
+                    <table class="trend-table" id="trend-table"></table>
+                </div>
+                <!-- DSR 추산 -->
+                <div class="dsr-row" id="dsr-row" style="display:none;"></div>
+            </div>
+
+            <!-- 수집된 뉴스 목록 -->
+            <div class="news-section">
+                <div class="news-section-title">
+                    📰 오늘의 수집 뉴스
+                    <div style="flex:1; height:1px; background:var(--slate-200); margin-left:8px;"></div>
+                </div>
+                <div class="news-tabs" id="news-tabs"></div>
+                <div id="news-panels"></div>
+            </div>
+
+            <!-- 액션 바 -->
+            <div class="report-action-bar">
+                <button class="btn btn-primary" style="font-size:13px;height:42px;" onclick="openEmailModal()">
+                    📧 이메일로 발송
+                </button>
+                <button class="btn btn-secondary" style="font-size:13px;height:42px;" onclick="printReport()">
+                    🖨️ 인쇄 / PDF 저장
+                </button>
+                <button class="btn btn-secondary" style="font-size:13px;height:42px;" onclick="copyReport()">
+                    📋 보고서 복사
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /page-wrapper -->
+
+    <script>
+        // ──────────────────────────────────
+        // 상태 관리
+        // ──────────────────────────────────
+        let currentResult = null;
+        let schedulerOn = false;
+
+        // ──────────────────────────────────
+        // UI 헬퍼
+        // ──────────────────────────────────
+        function setStatus(type, msg) {
+            const bar = document.getElementById('status-bar');
+            bar.className = `status-bar ${type}`;
+            document.getElementById('status-text').textContent = msg;
+        }
+
+        function addLog(msg, cls = '') {
+            const panel = document.getElementById('log-panel');
+            panel.classList.add('visible');
+            const line = document.createElement('div');
+            line.className = `log-line ${cls}`;
+            const ts = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+            line.textContent = `[${ts}]  ${msg}`;
+            panel.appendChild(line);
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        function clearLog() {
+            const panel = document.getElementById('log-panel');
+            panel.innerHTML = '';
+            panel.classList.remove('visible');
+        }
+
+        function setBtnLoading(id, on) {
+            const btn = document.getElementById(id);
+            btn.disabled = on;
+            btn.classList.toggle('loading', on);
+        }
+
+        function togglePw(id, el) {
+            const inp = document.getElementById(id);
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+            el.textContent = inp.type === 'password' ? '👁️' : '🙈';
+        }
+
+        // ──────────────────────────────────
+        // 메인: 브리핑 실행
+        // ──────────────────────────────────
+        function runBriefing() {
+            const pwd = document.getElementById('sys-pwd').value.trim();
+            if (pwd !== '880831') {
+                setStatus('error', '❌ 비밀번호가 올바르지 않습니다.');
+                return;
+            }
+
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey) {
+                setStatus('error', '❌ API 키를 먼저 입력해주세요!');
+                return;
+            }
+            const aiModel = document.getElementById('ai-model').value;
+            const focusPoint = document.getElementById('focus-point').value.trim();
+            const ecosKey = document.getElementById('ecos-key').value.trim();
+
+            clearLog();
+            setStatus('active', '🔍 뉴스 수집 중 (4개 카테고리) + ' + (ecosKey ? '한국은행 ECOS 금리 병렬 조회 중...' : 'AI 분석 준비 중...'));
+            setBtnLoading('run-btn', true);
+            document.getElementById('result-card').classList.remove('visible');
+            document.getElementById('ecos-section').classList.remove('visible');
+            addLog('▶ 브리핑 시스템 시작', 'highlight');
+            addLog('뉴스 수집 중... (Google News RSS 4-track)');
+            if (ecosKey) addLog('한국은행 ECOS API 연동 활성화 — 금리·CSI 11종 조회', 'highlight');
+
+            google.script.run
+                .withSuccessHandler(onBriefingSuccess)
+                .withFailureHandler(onError)
+                .runBriefing({ aiKey: apiKey, aiModel: aiModel, focusPoint: focusPoint, ecosKey: ecosKey });
+        }
+
+        function onBriefingSuccess(result) {
+            setBtnLoading('run-btn', false);
+            if (!result.success) {
+                setStatus('error', '❌ ' + result.error);
+                addLog('오류: ' + result.error, 'error');
+                return;
+            }
+            currentResult = result;
+            addLog(`✅ 뉴스 수집 완료: ${result.newsCount}건`, 'success');
+            if (result.rateData && result.rateData.success) {
+                addLog(`✅ ECOS 금리·CSI 연동 완료 (${result.rateData.fetchedAt})`, 'success');
+            }
+            addLog('AI 심층 분석 완료', 'success');
+            addLog('보고서 렌더링 중...', 'highlight');
+            const ecosLabel = result.rateData && result.rateData.success ? ' + ECOS 금리 연동' : '';
+            setStatus('success', `🎉 분석 완료! 총 ${result.newsCount}건 AI 심층 분석${ecosLabel}`);
+            renderReport(result);
+            addLog('보고서 생성 완료 — 결과를 확인하세요!', 'success');
+
+            // 스케줄러 자동 발송 설정이 있다면 지금 즉시 자동 발송 연계
+            const schedRecipients = document.getElementById('sched-recipients').value.trim();
+            if (schedRecipients) {
+                const senderName = document.getElementById('sched-sender').value.trim() || '대광건영 로제비앙';
+                addLog('전문가 레이아웃 이메일 자동 발송 중...', 'highlight');
+                google.script.run
+                    .withSuccessHandler(r => {
+                        if (r.success) {
+                            addLog(`✅ 이메일 자동 발송 완료: ${r.sentTo}명`, 'success');
+                        } else {
+                            addLog('이메일 발송 오류: ' + r.error, 'error');
+                        }
+                    })
+                    .withFailureHandler(err => addLog('이메일 발송 오류: ' + err.message, 'error'))
+                    .sendBriefingEmail({ result: result, recipients: schedRecipients, senderName: senderName });
+            }
+        }
+
+        function onError(err) {
+            setBtnLoading('run-btn', false);
+            setStatus('error', '❌ 오류 발생: ' + err.message);
+            addLog('시스템 오류: ' + err.message, 'error');
+        }
+
+        // ──────────────────────────────────
+        // 보고서 렌더링
+        // ──────────────────────────────────
+        function renderReport(result) {
+            const { news, aiReport, ts, newsCount, rateData } = result;
+
+            // 메타 정보
+            document.getElementById('rpt-date').textContent = ts;
+            document.getElementById('rpt-count').textContent = newsCount;
+            const MODEL_NAMES = {
+                gemini: 'Gemini 2.5 Flash', openai: 'GPT-4o', claude: 'Claude Opus 4.7',
+                grok: 'Grok-3', mistral: 'Mistral Large', perplexity: 'Sonar Pro',
+                github: 'GitHub AI (Azure)', cohere: 'Cohere R+', openrouter: 'OpenRouter Free'
+            };
+            const selectedModel = document.getElementById('ai-model').value;
+            document.getElementById('rpt-model').textContent = '🤖 ' + (MODEL_NAMES[selectedModel] || selectedModel);
+
+            // KPI
+            const counts = { '정책/세금': 0, '분양/청약': 0, '시장동향': 0, '매크로/원자재': 0 };
+            news.forEach(n => { if (counts[n.category] !== undefined) counts[n.category]++; });
+            document.getElementById('kpi-cat1').textContent = counts['정책/세금'];
+            document.getElementById('kpi-cat2').textContent = counts['분양/청약'];
+            document.getElementById('kpi-cat3').textContent = counts['시장동향'];
+            const mortRate = rateData && rateData.success && rateData.rates && rateData.rates.mortgage && rateData.rates.mortgage.rate;
+            document.getElementById('kpi-ecos').textContent = mortRate ? mortRate + '%' : '—';
+            const ecosBadge = document.getElementById('rpt-ecos-badge');
+            if (rateData && rateData.success) {
+                ecosBadge.style.display = 'flex';
+                ecosBadge.innerHTML = '🏦 ECOS · <strong style="margin-left:4px;">' + (rateData.fetchedAt || 'LIVE') + '</strong>';
+            } else {
+                ecosBadge.style.display = 'none';
+            }
+
+            // AI 보고서 파싱 → HTML
+            document.getElementById('report-body').innerHTML = parseAiReport(aiReport);
+
+            // ECOS 금리 대시보드
+            renderEcosDashboard(rateData);
+
+            // 뉴스 탭 & 패널
+            renderNewsTabs(news);
+
+            // 카드 표시
+            const card = document.getElementById('result-card');
+            card.classList.add('visible');
+            card.style.display = 'block';
+            setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+
+        function parseAiReport(text) {
+            if (!text) return '<p style="color:#999;">보고서를 생성하지 못했습니다.</p>';
+
+            const lines = text.split('\n');
+            let html = '';
+            let sectionIdx = 0;
+            let inSection = false;
+            let sectionBuf = '';
+
+            const sectionIcons = ['💡', '📈', '🎯'];
+            const sectionNums = ['1', '2', '3'];
+
+            function flushSection(title, buf, idx) {
+                const icon = sectionIcons[idx] || '📌';
+                const num = sectionNums[idx] || String(idx + 1);
+                const isFirst = idx === 0;
+                const content = formatSectionContent(buf.trim(), isFirst);
+                return `
+        <div class="report-section">
+          <div class="section-heading">
+            <div class="num-badge">${num}</div>
+            <h3>${icon} ${title}</h3>
+            <div class="gold-line"></div>
+          </div>
+          ${isFirst
+                        ? `<div class="briefing-box"><div class="report-text">${content}</div></div>`
+                        : `<div class="report-text">${content}</div>`}
+        </div>`;
+            }
+
+            lines.forEach(line => {
+                if (line.startsWith('## ')) {
+                    if (inSection) {
+                        // 이전 섹션 flush
+                        const title = lines.find((l, i) => l.startsWith('## ') && sectionBuf.length === 0) || '';
+                        html += flushSection(currentTitle, sectionBuf, sectionIdx - 1);
+                        sectionBuf = '';
+                    }
+                    currentTitle = line.replace('## ', '').replace(/^\d+\.\s*/, '');
+                    inSection = true;
+                    sectionIdx++;
+                } else if (inSection) {
+                    sectionBuf += line + '\n';
+                }
+            });
+
+            if (inSection && sectionBuf.trim()) {
+                html += flushSection(currentTitle, sectionBuf, sectionIdx - 1);
+            }
+
+            return html || `<div class="report-text">${formatSectionContent(text, false)}</div>`;
+        }
+
+        let currentTitle = '';
+
+        function formatSectionContent(text, isFirst) {
+            return text.split('\n').map(line => {
+                if (!line.trim()) return '';
+                // 볼드 처리
+                line = line.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                // 들여쓰기 항목 (가. 나. 다. / 1) 2) 3) / ① ② ③)
+                if (/^[가나다라마바사]\./.test(line.trim()) || /^[①②③④⑤]/.test(line.trim()) || /^\d+\)/.test(line.trim())) {
+                    return `<p class="indent">${line.trim()}</p>`;
+                }
+                return `<p>${line}</p>`;
+            }).join('');
+        }
+
+        // ──────────────────────────────────
+        // ECOS 금리 대시보드 렌더링
+        // ──────────────────────────────────
+        function renderEcosDashboard(rateData) {
+            const sec = document.getElementById('ecos-section');
+            if (!rateData || !rateData.success || !rateData.rates) {
+                sec.classList.remove('visible');
+                return;
+            }
+            sec.classList.add('visible');
+            const rates = rateData.rates || {};
+            const trends = rateData.trends || {};
+
+            if (rateData.fetchedAt) {
+                document.getElementById('ecos-fetched-at').textContent = '기준: ' + rateData.fetchedAt;
+            }
+
+            // ── 금리 카드 (8종) ──
+            const RATE_KEYS = ['baseRate', 'mortgage', 'household', 'credit', 'bond3y', 'bond10y', 'cd', 'corporate'];
+            const rateGrid = document.getElementById('rate-grid');
+            rateGrid.innerHTML = '';
+            RATE_KEYS.forEach(k => {
+                const r = rates[k];
+                if (!r) return;
+                const card = document.createElement('div');
+                card.className = 'rate-card';
+                card.innerHTML = `
+        <div class="rc-label">${r.label || k}</div>
+        ${r.rate != null
+                        ? `<div class="rc-value">${r.rate}<span class="rc-unit">%</span></div>
+             <div class="rc-date">${r.date || ''}</div>`
+                        : `<div class="rc-na">N/A</div>`}
+        <div class="rc-sub">${r.sublabel || ''}</div>`;
+                rateGrid.appendChild(card);
+            });
+
+            // ── CSI 3종 ──
+            const CSI_KEYS = [
+                { key: 'csi', icon: '🏠' },
+                { key: 'debtCsi', icon: '💳' },
+                { key: 'ccsi', icon: '📊' }
+            ];
+            const csiGrid = document.getElementById('csi-grid');
+            csiGrid.innerHTML = '';
+            CSI_KEYS.forEach(({ key, icon }) => {
+                const r = rates[key];
+                if (!r) return;
+                const val = r.rate != null ? parseFloat(r.rate) : null;
+                const cls = val == null ? '' : val > 100 ? 'above100' : val < 100 ? 'below100' : '';
+                const card = document.createElement('div');
+                card.className = 'rate-card csi-card';
+                card.innerHTML = `
+        <div class="rc-label">${icon} ${r.label || key}</div>
+        ${val != null
+                        ? `<div class="csi-value-num ${cls}">${r.rate}<span class="rc-unit"> p</span></div>
+             <div class="rc-date">${r.date || ''}</div>`
+                        : `<div class="rc-na">N/A</div>`}
+        <div class="rc-sub">${r.sublabel || ''}</div>`;
+                csiGrid.appendChild(card);
+            });
+
+            // ── 트렌드 테이블 ──
+            const trendKeys = ['baseRate', 'mortgage', 'household', 'bond3y', 'bond10y', 'csi', 'ccsi'];
+            const table = document.getElementById('trend-table');
+            table.innerHTML = '';
+            const thead = document.createElement('thead');
+            thead.innerHTML = `<tr>
+      <th>지표</th><th>현재</th>
+      <th>3M전</th><th>Δ3M</th>
+      <th>12M전</th><th>Δ12M</th>
+    </tr>`;
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            trendKeys.forEach(k => {
+                const t = trends[k];
+                if (!t || !t.current) return;
+                const isCsi = ['csi', 'debtCsi', 'ccsi'].includes(k);
+                const unit = isCsi ? 'p' : '%';
+                const dUnit = isCsi ? 'p' : 'pp';
+                function deltaClass(v) {
+                    if (v == null) return 'delta-flat';
+                    const n = parseFloat(v);
+                    if (isCsi) return n > 0 ? 'delta-up' : n < 0 ? 'delta-down' : 'delta-flat';
+                    return n > 0 ? 'delta-up' : n < 0 ? 'delta-down' : 'delta-flat';
+                }
+                function fmtDelta(v, cls) {
+                    if (v == null) return `<span class="delta-flat">—</span>`;
+                    const sign = parseFloat(v) > 0 ? '+' : '';
+                    return `<span class="${cls}">${sign}${v}${dUnit}</span>`;
+                }
+                const d3 = t.ago3m ? t.ago3m.changeFromPastToNowPp : null;
+                const d12 = t.ago12m ? t.ago12m.changeFromPastToNowPp : null;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+        <td>${t.label || k}</td>
+        <td>${t.current.rate}${unit}</td>
+        <td>${t.ago3m ? t.ago3m.rate + unit : '—'}</td>
+        <td>${fmtDelta(d3, deltaClass(d3))}</td>
+        <td>${t.ago12m ? t.ago12m.rate + unit : '—'}</td>
+        <td>${fmtDelta(d12, deltaClass(d12))}</td>`;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            // ── DSR 추산 ──
+            const mortRate = rates.mortgage && rates.mortgage.rate != null ? parseFloat(rates.mortgage.rate) : null;
+            const dsrRow = document.getElementById('dsr-row');
+            if (mortRate) {
+                dsrRow.style.display = 'grid';
+                const r = mortRate / 100 / 12, n = 360;
+                let html = `<div class="dsr-label">DSR 40%<br>월상환 추산<br>(주담대 ${mortRate}%<br>LTV 70%)</div>`;
+                [5, 7, 10].forEach(억 => {
+                    const loan = 억 * 1e8 * 0.7;
+                    const monthly = r === 0 ? loan / n : loan * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+                    html += `<div class="dsr-cell">
+          <div class="dsr-val">${Math.round(monthly / 10000).toLocaleString()}만원</div>
+          <div class="dsr-sub">분양가 ${억}억 / 월</div>
+        </div>`;
+                });
+                dsrRow.innerHTML = html;
+            } else {
+                dsrRow.style.display = 'none';
+            }
+        }
+
+        function renderNewsTabs(news) {
+            const categories = {};
+            news.forEach(n => {
+                if (!categories[n.category]) categories[n.category] = [];
+                categories[n.category].push(n);
+            });
+
+            const catColors = ['cat0', 'cat1', 'cat2'];
+            const cats = Object.keys(categories);
+            const tabsEl = document.getElementById('news-tabs');
+            const panelsEl = document.getElementById('news-panels');
+            tabsEl.innerHTML = `<div class="news-tab active" onclick="switchTab(this, 'tab-all')">전체 (${news.length})</div>`;
+            panelsEl.innerHTML = '';
+
+            // 전체 패널
+            const allPanel = document.createElement('div');
+            allPanel.className = 'news-panel active';
+            allPanel.id = 'tab-all';
+            news.forEach((n, i) => {
+                const catIdx = cats.indexOf(n.category);
+                allPanel.innerHTML += `
+        <div class="news-item">
+          <span class="news-cat-pill ${catColors[catIdx] || 'cat0'}">${n.category}</span>
+          <a href="${n.link}" target="_blank" rel="noopener">${n.title}</a>
+        </div>`;
+            });
+            panelsEl.appendChild(allPanel);
+
+            // 카테고리별 탭
+            cats.forEach((cat, i) => {
+                const tabId = `tab-cat-${i}`;
+                tabsEl.innerHTML += `<div class="news-tab" onclick="switchTab(this, '${tabId}')">${cat} (${categories[cat].length})</div>`;
+                const panel = document.createElement('div');
+                panel.className = 'news-panel';
+                panel.id = tabId;
+                categories[cat].forEach(n => {
+                    panel.innerHTML += `
+          <div class="news-item">
+            <a href="${n.link}" target="_blank" rel="noopener">${n.title}</a>
+          </div>`;
+                });
+                panelsEl.appendChild(panel);
+            });
+        }
+
+        function switchTab(el, panelId) {
+            document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.news-panel').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById(panelId).classList.add('active');
+        }
+
+        // ──────────────────────────────────
+        // 스케줄러
+        // ──────────────────────────────────
+        function toggleScheduler() {
+            if (!schedulerOn) {
+                const pwd = document.getElementById('sys-pwd').value.trim();
+                if (pwd !== '880831') {
+                    setStatus('error', '❌ 비밀번호가 올바르지 않습니다.');
+                    return;
+                }
+            }
+
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey && !schedulerOn) {
+                setStatus('error', '❌ 스케줄러를 켜려면 먼저 API 키를 입력하세요!');
+                return;
+            }
+
+            const btn = document.getElementById('sched-btn');
+            if (!schedulerOn) {
+                // 켜기
+                setBtnLoading('sched-btn', true);
+                const params = {
+                    aiKey: apiKey,
+                    aiModel: document.getElementById('ai-model').value,
+                    focusPoint: document.getElementById('focus-point').value.trim(),
+                    recipients: document.getElementById('sched-recipients').value.trim(),
+                    senderName: document.getElementById('sched-sender').value.trim(),
+                    schedTime: document.getElementById('sched-time').value
+                };
+                google.script.run
+                    .withSuccessHandler(r => {
+                        setBtnLoading('sched-btn', false);
+                        if (r.success) {
+                            schedulerOn = true;
+                            btn.querySelector('.btn-text').textContent = '⏰ 자동 스케줄러 OFF';
+                            btn.classList.add('active');
+                            setStatus('success', `🔔 스케줄러 가동 — 매일 [${params.schedTime}]에 자동 실행됩니다.`);
+                            addLog(`스케줄러 설정 완료: 매일 ${params.schedTime} 자동 실행`, 'success');
+                        } else {
+                            setStatus('error', '❌ 스케줄러 설정 실패: ' + r.error);
+                            addLog('스케줄러 오류: ' + r.error, 'error');
+                        }
+                    })
+                    .withFailureHandler(err => {
+                        setBtnLoading('sched-btn', false);
+                        setStatus('error', '❌ ' + err.message);
+                    })
+                    .setupScheduler(params);
+            } else {
+                // 끄기
+                setBtnLoading('sched-btn', true);
+                google.script.run
+                    .withSuccessHandler(r => {
+                        setBtnLoading('sched-btn', false);
+                        schedulerOn = false;
+                        btn.querySelector('.btn-text').textContent = '⏰ 자동 스케줄러 ON';
+                        btn.classList.remove('active');
+                        setStatus('idle', '🔕 스케줄러가 중지되었습니다.');
+                        addLog('스케줄러 중지됨', '');
+                    })
+                    .withFailureHandler(err => { setBtnLoading('sched-btn', false); })
+                    .deleteScheduler();
+            }
+        }
+
+        // ──────────────────────────────────
+        // 이메일 모달
+        // ──────────────────────────────────
+        function openEmailModal() {
+            if (!currentResult) {
+                alert('먼저 브리핑을 실행해주세요.');
+                return;
+            }
+            document.getElementById('emailModal').classList.add('open');
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').classList.remove('open');
+        }
+
+        // ──────────────────────────────────
+        // 클라이언트 PDF 생성 (html2pdf.js)
+        // ──────────────────────────────────
+        function doSendEmail() {
+            const recipients = document.getElementById('modal-recipients').value.trim();
+            const senderName = document.getElementById('modal-sender').value.trim();
+            if (!recipients) {
+                alert('수신자 이메일 주소를 입력해주세요.');
+                return;
+            }
+
+            const btn = document.getElementById('modal-send-btn');
+            btn.disabled = true;
+            btn.classList.add('loading');
+            addLog('고품질 브리핑 메일 발송 중...', 'highlight');
+
+            google.script.run
+                .withSuccessHandler(r => {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    closeEmailModal();
+                    if (r.success) {
+                        setStatus('success', `✅ 전문 레이아웃 메일 발송 완료! (${r.sentTo}명)`);
+                        addLog(`✅ 메일 발송 완료: ${r.sentTo}명`, 'success');
+                    } else {
+                        setStatus('error', '❌ 발송 실패: ' + r.error);
+                        addLog('메일 발송 오류: ' + r.error, 'error');
+                    }
+                })
+                .withFailureHandler(err => {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    closeEmailModal();
+                    setStatus('error', '❌ ' + err.message);
+                })
+                .sendBriefingEmail({ result: currentResult, recipients: recipients, senderName: senderName });
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('emailModal').addEventListener('click', function (e) {
+            if (e.target === this) closeEmailModal();
+        });
+
+        // ──────────────────────────────────
+        // 인쇄 / 복사
+        // ──────────────────────────────────
+        function printReport() {
+            window.print();
+        }
+
+        function copyReport() {
+            if (!currentResult) return;
+            const text = currentResult.aiReport || '';
+            navigator.clipboard.writeText(text).then(() => {
+                setStatus('success', '📋 AI 보고서 텍스트가 클립보드에 복사되었습니다!');
+            }).catch(() => {
+                setStatus('error', '❌ 복사에 실패했습니다. 브라우저에서 복사를 허용해 주세요.');
+            });
+        }
+    </script>
+
+    <!-- 인쇄 전용 스타일 -->
+    <style>
+        /* ========================================== */
+        /* 인쇄 전용 스타일 (웹 보이는 그대로 스케일링 축소) */
+        /* ========================================== */
+        @media print {
+            @page {
+                size: A4;
+                margin: 12mm 10mm;
+            }
+
+            body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                /* 웹상의 크기와 밸런스를 맞추기 위해 전체 비율만 축소 */
+                zoom: 0.82;
+            }
+
+            /* ── 불필요한 UI 완전 숨김 ── */
+            .site-header,
+            .modal-overlay,
+            .card:not(#result-card),
+            .report-action-bar,
+            .news-tabs,
+            .log-panel,
+            .status-bar {
+                display: none !important;
+            }
+
+            .ecos-section.visible {
+                display: block !important;
+            }
+
+            .ecos-live-badge::before {
+                animation: none !important;
+            }
+
+            .dsr-row {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /* ── 페이지 및 결과 카드 여백 백지화 ── */
+            .page-wrapper {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #result-card {
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* ── 뉴스 탭 강제 해제 (전체 보기만 표시) ── */
+            .news-section {
+                display: block !important;
+            }
+
+            .news-tabs {
+                display: none !important;
+            }
+
+            .news-panel {
+                display: none !important;
+            }
+
+            /* 다른 패널들은 강제 숨김 */
+            #tab-all {
+                display: block !important;
+            }
+
+            /* 전체 탭만 표시 */
+
+            /* 페이지 넘김: 자연스럽게 흐르도록 설정 */
+            .report-section {
+                page-break-inside: auto;
+            }
+
+            .section-heading {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+
+            .briefing-box {
+                page-break-inside: auto;
+            }
+
+            .news-section {
+                page-break-before: auto;
+            }
+
+            .news-section-title {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+
+            .news-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            .news-item a {
+                color: #1B365D !important;
+                text-decoration: none !important;
+            }
+
+            .report-text p,
+            .report-text .indent {
+                orphans: 3;
+                widows: 3;
+            }
+
+            .kpi-strip {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            .report-masthead {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+        }
+    </style>
+</body>
+
+</html>
