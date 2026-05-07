@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { fetchAllNews } from "@/lib/news";
 import { fetchAllRates } from "@/lib/ecos";
 import { callAiAnalysis } from "@/lib/ai";
@@ -14,12 +13,6 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ success: false, error: "인증 필요" }, { status: 401 });
-
   let params: BriefingParams;
   try {
     params = await request.json();

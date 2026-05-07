@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { sendBriefingEmail } from "@/lib/email/send";
 import type { BriefingResult } from "@/lib/types";
 
@@ -15,12 +14,6 @@ interface RequestBody {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ success: false, error: "인증 필요" }, { status: 401 });
-
   let body: RequestBody;
   try {
     body = await request.json();

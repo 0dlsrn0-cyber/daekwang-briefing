@@ -5,12 +5,7 @@ import type { BriefingResult } from "@/lib/types";
 import BriefingForm from "./BriefingForm";
 import BriefingResultView from "./BriefingResult";
 
-interface Props {
-  email?: string;
-  onSignOut: () => void;
-}
-
-export default function HomeView({ email, onSignOut }: Props) {
+export default function HomeView() {
   const [result, setResult] = useState<BriefingResult | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -21,10 +16,7 @@ export default function HomeView({ email, onSignOut }: Props) {
 
   return (
     <div className="page-wrapper">
-      <header className="site-header" style={{ position: "relative" }}>
-        <button className="signout" type="button" onClick={onSignOut}>
-          {email ? `${email} · 로그아웃` : "로그아웃"}
-        </button>
+      <header className="site-header">
         <div className="brand-badge">DAEKWANG · LOGEBIEN</div>
         <h1>
           부동산 동향 <span>일일 AI 브리핑</span>
@@ -44,9 +36,7 @@ export default function HomeView({ email, onSignOut }: Props) {
         </div>
         <div className="card-body">
           <BriefingForm onResult={setResult} onLog={appendLog} />
-          {logs.length > 0 && (
-            <div className="log">{logs.join("\n")}</div>
-          )}
+          {logs.length > 0 && <div className="log">{logs.join("\n")}</div>}
         </div>
       </div>
 
