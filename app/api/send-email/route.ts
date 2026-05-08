@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendBriefingEmail } from "@/lib/email/send";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { BriefingResult } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -44,5 +45,25 @@ export async function POST(request: NextRequest) {
     gmailUser: body.gmailUser,
     gmailAppPassword: body.gmailAppPassword,
   });
+
+  // DB 기록 — 실패해도 발송 결과는 그대로 반환
+  try {
+    const supabase = getSupabaseAdmin();
+    const recipientList = body.recipients
+      .split(/[,;]/)
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const { error } = await supabase.from("email_sends").insert({
+      run_id: body.result.runId ?? null,
+      recipients: recipientList,
+      sender_name: body.senderName || null,
+      status: sendResult.success ? "success" : "failed",
+      error_message: sendResult.success ? null : sendResult.error || null,
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.error("[supabase] email_sends insert 실패:", e);
+  }
+
   return NextResponse.json(sendResult);
 }

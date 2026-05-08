@@ -86,6 +86,7 @@ export interface BriefingResult {
   rateData?: RateData | null;
   aiModel?: AiModel;
   error?: string;
+  runId?: string;
 }
 
 export interface BriefingParams {

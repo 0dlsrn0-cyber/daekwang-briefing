@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { BriefingResult } from "@/lib/types";
 import BriefingForm from "./BriefingForm";
 import BriefingResultView from "./BriefingResult";
@@ -16,6 +17,9 @@ export default function HomeView() {
 
   return (
     <div className="page-wrapper">
+      <Link href="/admin" className="admin-link" prefetch={false}>
+        🔒 관리자
+      </Link>
       <header className="site-header">
         <div className="brand-badge">DAEKWANG · LOGEBIEN</div>
         <h1>

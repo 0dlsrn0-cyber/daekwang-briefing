@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
 import { fetchAllNews } from "@/lib/news";
 import { fetchAllRates } from "@/lib/ecos";
 import { callAiAnalysis } from "@/lib/ai";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type {
   AiModel,
   BriefingParams,
@@ -11,6 +14,18 @@ import type {
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+function hashUrl(url: string): string {
+  return createHash("sha256").update(url).digest("hex");
+}
+
+async function logSafely(label: string, fn: () => unknown) {
+  try {
+    await fn();
+  } catch (e) {
+    console.error(`[supabase] ${label} 실패:`, e);
+  }
+}
 
 export async function POST(request: NextRequest) {
   let params: BriefingParams;
@@ -35,9 +50,58 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const startTime = Date.now();
+
+  let supabase: ReturnType<typeof getSupabaseAdmin> | null = null;
+  try {
+    supabase = getSupabaseAdmin();
+  } catch (e) {
+    console.error("[supabase] init 실패:", e);
+  }
+
+  const sessionId =
+    (await cookies()).get("session_id")?.value ?? null;
+
+  // 실행 시작 행 INSERT
+  let runId: string | null = null;
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("briefing_runs")
+        .insert({
+          session_id: sessionId,
+          ai_model: aiModel,
+          focus_point: focusPoint || null,
+          ecos_used: !!ecosKey,
+          status: "running",
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      runId = (data as { id: string } | null)?.id ?? null;
+    } catch (e) {
+      console.error("[supabase] briefing_runs insert 실패:", e);
+    }
+  }
+
+  async function markRun(status: string, errorMessage: string | null) {
+    if (!supabase || !runId) return;
+    await logSafely("briefing_runs update", () =>
+      supabase!
+        .from("briefing_runs")
+        .update({
+          status,
+          error_message: errorMessage,
+          duration_ms: Date.now() - startTime,
+        })
+        .eq("id", runId!),
+    );
+  }
+
   try {
     const newsResult = await fetchAllNews();
     if (!newsResult.success || newsResult.news.length === 0) {
+      await markRun("failed", "뉴스 수집 실패 또는 오늘 기사 없음");
       return NextResponse.json({
         success: false,
         error: "뉴스 수집 실패 또는 오늘 기사 없음",
@@ -59,6 +123,8 @@ export async function POST(request: NextRequest) {
     }
 
     let aiReport = "";
+    let aiFailed = false;
+    let aiError: string | null = null;
     try {
       aiReport = await callAiAnalysis(
         aiKey,
@@ -68,10 +134,37 @@ export async function POST(request: NextRequest) {
         rateData,
       );
     } catch (apiErr) {
+      aiFailed = true;
+      aiError = (apiErr as Error).message;
       aiReport =
         "## [안내] AI 서버 과부하로 인한 분석 일시 지연\n\n" +
         "수집된 뉴스와 금리 데이터를 먼저 확인해 주세요.\n\n" +
-        `*오류: ${(apiErr as Error).message}*`;
+        `*오류: ${aiError}*`;
+    }
+
+    // DB 기록 (실패해도 응답은 그대로 반환)
+    if (supabase && runId) {
+      const rid = runId;
+      const newsRows = newsResult.news.map((n) => ({
+        run_id: rid,
+        category: n.category,
+        title: n.title,
+        url: n.link,
+        url_hash: hashUrl(n.link),
+        pub_date: n.pubDate || null,
+      }));
+      await logSafely("news_items insert", () =>
+        supabase!.from("news_items").insert(newsRows),
+      );
+      await logSafely("reports insert", () =>
+        supabase!.from("reports").insert({
+          run_id: rid,
+          ai_report: aiReport,
+          rate_snapshot: rateData ?? null,
+          news_count: newsResult.news.length,
+        }),
+      );
+      await markRun(aiFailed ? "partial" : "success", aiError);
     }
 
     const ts = new Date(Date.now() + 9 * 60 * 60 * 1000)
@@ -88,10 +181,12 @@ export async function POST(request: NextRequest) {
       focusPoint,
       rateData,
       aiModel,
+      runId: runId ?? undefined,
     };
 
     return NextResponse.json(result);
   } catch (err) {
+    await markRun("failed", (err as Error).message);
     return NextResponse.json({
       success: false,
       error: (err as Error).message,
