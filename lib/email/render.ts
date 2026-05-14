@@ -33,42 +33,12 @@ const CSI_KEYS_MAP: Record<string, boolean> = {
   ccsi: true,
 };
 
-// 600px 이하에서 적용되는 모바일 보정. 인라인 스타일을 미디어쿼리로 오버라이드한다.
-const RESPONSIVE_CSS = `
+// 고정 폭(680px) 디자인. 모바일에서는 클라이언트 줌으로 본다 (반응형 미적용).
+const BASE_CSS = `
   body { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
   table { border-collapse: collapse !important; }
   img { -ms-interpolation-mode: bicubic; }
   a { text-decoration: none; }
-
-  @media only screen and (max-width: 600px) {
-    .container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; }
-    .px-outer { padding-left: 20px !important; padding-right: 20px !important; }
-    .py-block { padding-top: 24px !important; padding-bottom: 24px !important; }
-    .h1 { font-size: 24px !important; line-height: 1.22 !important; }
-    .h2 { font-size: 15px !important; }
-    .eyebrow { font-size: 10px !important; letter-spacing: 1.8px !important; }
-    .header-row > tbody > tr > td.right-meta {
-      display: block !important;
-      width: 100% !important;
-      text-align: left !important;
-      padding: 14px 0 0 0 !important;
-    }
-    .rate-cell {
-      width: 50% !important;
-      display: inline-block !important;
-      box-sizing: border-box !important;
-    }
-    .trend-hide { display: none !important; }
-    .footer-row > tbody > tr > td.footer-right {
-      display: block !important;
-      width: 100% !important;
-      text-align: left !important;
-      padding: 14px 0 0 0 !important;
-    }
-    .section-num { width: 30px !important; height: 30px !important; line-height: 30px !important; font-size: 12px !important; }
-    .news-title { font-size: 14px !important; }
-    .chip { margin-bottom: 6px !important; }
-  }
 `;
 
 export function buildBriefingEmailHtml(result: BriefingResult): string {
@@ -92,11 +62,11 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
   return [
     `<!DOCTYPE html><html lang="ko"><head>`,
     `<meta charset="UTF-8">`,
-    `<meta name="viewport" content="width=device-width,initial-scale=1">`,
+    `<meta name="viewport" content="width=680">`,
     `<meta name="x-apple-disable-message-reformatting">`,
     `<meta http-equiv="X-UA-Compatible" content="IE=edge">`,
     `<title>대광 로제비앙 부동산 동향 브리핑</title>`,
-    `<style>${RESPONSIVE_CSS}</style>`,
+    `<style>${BASE_CSS}</style>`,
     `</head>`,
     `<body style="margin:0;padding:0;background:${C.cream100};font-family:${FONT_STACK};color:${C.ink800};-webkit-font-smoothing:antialiased;">`,
 
@@ -106,7 +76,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     // 바깥 래퍼
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.cream100};">`,
     `<tr><td align="center" style="padding:28px 16px;">`,
-    `<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;">`,
+    `<table role="presentation" class="container" width="680" cellpadding="0" cellspacing="0" border="0" style="max-width:680px;width:100%;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;">`,
 
     // [1] HEADER
     `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;">`,
