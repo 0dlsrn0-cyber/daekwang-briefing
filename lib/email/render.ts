@@ -62,7 +62,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
   return [
     `<!DOCTYPE html><html lang="ko"><head>`,
     `<meta charset="UTF-8">`,
-    `<meta name="viewport" content="width=680">`,
+    `<meta name="viewport" content="width=680,initial-scale=1,user-scalable=yes">`,
     `<meta name="x-apple-disable-message-reformatting">`,
     `<meta http-equiv="X-UA-Compatible" content="IE=edge">`,
     `<title>대광 로제비앙 부동산 동향 브리핑</title>`,
@@ -76,7 +76,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     // 바깥 래퍼
     `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.cream100};">`,
     `<tr><td align="center" style="padding:28px 16px;">`,
-    `<table role="presentation" class="container" width="680" cellpadding="0" cellspacing="0" border="0" style="max-width:680px;width:100%;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;">`,
+    `<table role="presentation" class="container" width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;min-width:680px;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;word-break:keep-all;">`,
 
     // [1] HEADER
     `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;">`,
@@ -86,7 +86,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `<div class="h1" style="font-size:30px;font-weight:700;color:${C.ink900};letter-spacing:-1px;line-height:1.18;margin-bottom:10px;">부동산 동향<br>심층 분석 브리핑</div>`,
     `<div style="font-size:13px;color:${C.ink500};letter-spacing:0.2px;">Real Estate Market Intelligence Report</div>`,
     `</td>`,
-    `<td class="right-meta" valign="top" align="right" style="padding-left:16px;width:130px;">`,
+    `<td class="right-meta" valign="top" align="right" width="140" style="padding-left:16px;width:140px;">`,
     `<div style="font-size:10px;color:${C.ink400};letter-spacing:1.8px;font-weight:600;margin-bottom:4px;">REPORT DATE</div>`,
     `<div style="font-size:15px;color:${C.ink800};font-weight:700;letter-spacing:-0.3px;">${today}</div>`,
     `</td>`,
@@ -107,7 +107,10 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
 
     // [3] AI REPORT
     `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
-    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">AI Deep Analysis Report</div>`,
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;"><tr>`,
+    `<td valign="middle"><span class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;text-transform:uppercase;">AI Deep Analysis Report</span></td>`,
+    `<td valign="middle" align="right"><span style="display:inline-block;background:${C.ink800};color:${C.cream50};border-radius:4px;padding:5px 11px;font-size:10px;font-weight:700;letter-spacing:1.2px;white-space:nowrap;">대광그룹 주택관리팀</span></td>`,
+    `</tr></table>`,
     reportHtml,
     `</td></tr>`,
 
