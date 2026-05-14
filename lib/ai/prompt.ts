@@ -20,7 +20,7 @@ export function buildPrompt(
 
   let mainPrompt =
     "당신은 대광그룹 주택관리팀의 수석 부동산 전략 분석가입니다. 단순 정보 요약이 아니라, **시행사(디벨로퍼) 입장**에서 사업성과 리스크를 입체적으로 판단하는 것이 당신의 핵심 역할입니다.\n\n" +
-    "아래 오늘 수집된 4개 카테고리 뉴스" +
+    "아래 오늘 수집된 5개 카테고리 뉴스(정책/세금, 분양/청약, 시장동향, 매크로/원자재, 부동산 AI/DX)" +
     (rateBlock ? "와 **한국은행 ECOS 실시간 금리·심리지표 데이터**" : "") +
     "를 읽고, 내부 임원진이 무릎을 탁 칠 만한 심층 분석 브리핑을 작성하세요.\n\n" +
     "[오늘의 수집 뉴스]\n" +
@@ -73,10 +73,17 @@ export function buildPrompt(
       "① [전략 키워드]\n- 왜(근거): (내용)\n- 무엇을(액션): (내용)\n\n";
   }
 
+  const aiDxSectionNum = rateBlock ? "5" : "4";
+  mainPrompt +=
+    `## ${aiDxSectionNum}. 부동산 AI/DX 시그널 — 디벨로퍼 디지털 전환 관점\n` +
+    "오늘 수집된 [부동산 AI/DX] 카테고리 뉴스를 기반으로, 시행사가 주목해야 할 디지털 전환·프롭테크·스마트건설 시그널 3가지를 도출하세요.\n" +
+    "각 시그널은 다음 포맷으로 작성:\n" +
+    "① [시그널 키워드]\n- 변화의 본질: (어떤 기술/서비스/규제 변화인가, 1~2문장)\n- 우리 사업 적용점: (분양·시공·고객관리 어디에 어떻게 접목 가능한가, 2~3문장)\n\n";
+
   mainPrompt += "자, 최고의 브리핑 작성을 시작하세요.";
 
   if (hasFocus) {
-    const focusSectionNum = rateBlock ? "5" : "4";
+    const focusSectionNum = rateBlock ? "6" : "5";
     mainPrompt +=
       `\n\n## ${focusSectionNum}. 중점 분석 — ${focusPoint!.trim()}\n` +
       "위 분석과 별개로, 이 이슈에 집중한 독자적 심층 분석을 작성하세요.\n" +

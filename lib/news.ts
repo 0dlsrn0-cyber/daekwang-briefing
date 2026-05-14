@@ -1,6 +1,8 @@
 import { XMLParser } from "fast-xml-parser";
 import type { NewsItem, NewsResult } from "./types";
 
+export const AI_DX_CATEGORY = "부동산 AI/DX";
+
 const SEARCH_QUERIES = [
   { category: "정책/세금", query: "부동산 (정책 OR 세금 OR 규제 OR 대출)" },
   { category: "분양/청약", query: "아파트 (분양 OR 청약 OR 모델하우스 OR 건설사)" },
@@ -9,6 +11,11 @@ const SEARCH_QUERIES = [
     category: "매크로/원자재",
     query:
       "(원자재 OR 철근 OR 시멘트 OR 건설자재 OR 환율 OR 연준 OR 기준금리 OR 인플레이션 OR PF) (건설 OR 부동산 OR 경제)",
+  },
+  {
+    category: AI_DX_CATEGORY,
+    query:
+      "(부동산 OR 건설 OR 분양 OR 프롭테크 OR 건설사) (AI OR 인공지능 OR 자동화 OR 디지털전환 OR DX OR 스마트건설 OR 빅데이터)",
   },
 ];
 

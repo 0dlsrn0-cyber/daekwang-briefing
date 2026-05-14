@@ -197,6 +197,9 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/stats" className="btn btn-secondary">
               통계 대시보드
             </Link>
+            <Link href="/admin/settings" className="btn btn-secondary">
+              접근키 설정
+            </Link>
             <Link
               href="/api/health/stale-runs"
               className="btn btn-secondary"

@@ -1,10 +1,14 @@
-export async function callGemini(aiKey: string, prompt: string): Promise<string> {
+export async function callGemini(
+  aiKey: string,
+  prompt: string,
+  model: string = "gemini-2.5-flash",
+): Promise<string> {
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: { temperature: 0.6, maxOutputTokens: 8192 },
   };
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${aiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

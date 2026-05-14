@@ -1,5 +1,6 @@
 export type AiModel =
   | "gemini"
+  | "gemini3"
   | "claude"
   | "openai"
   | "grok"

@@ -12,6 +12,7 @@ import { callOpenRouter } from "./openrouter";
 
 export const MODEL_LABELS: Record<AiModel, string> = {
   gemini: "Google Gemini 2.5 Flash",
+  gemini3: "Google Gemini 3 Pro (Preview)",
   claude: "Claude Opus 4.7",
   grok: "xAI Grok-3",
   perplexity: "Perplexity Sonar Pro",
@@ -48,6 +49,8 @@ export async function callAiAnalysis(
       return callCohere(aiKey, prompt);
     case "openrouter":
       return callOpenRouter(aiKey, prompt);
+    case "gemini3":
+      return callGemini(aiKey, prompt, "gemini-3-pro-preview");
     case "gemini":
     default:
       return callGemini(aiKey, prompt);

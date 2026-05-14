@@ -31,6 +31,9 @@ export default function AdminLayout({
             <Link href="/admin/stats" className="admin-nav-link">
               통계
             </Link>
+            <Link href="/admin/settings" className="admin-nav-link">
+              설정
+            </Link>
             <form action={logoutAction} className="admin-logout-form">
               <button type="submit" className="admin-logout">
                 로그아웃

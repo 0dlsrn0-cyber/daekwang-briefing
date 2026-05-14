@@ -5,6 +5,7 @@ import type { AiModel, BriefingResult } from "@/lib/types";
 
 const MODEL_OPTIONS: { value: AiModel; label: string }[] = [
   { value: "gemini", label: "Google Gemini 2.5 Flash" },
+  { value: "gemini3", label: "Google Gemini 3 Pro (Preview)" },
   { value: "claude", label: "Claude Opus 4.7" },
   { value: "openai", label: "OpenAI GPT-4o" },
   { value: "grok", label: "xAI Grok-3" },
