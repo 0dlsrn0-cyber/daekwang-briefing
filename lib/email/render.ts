@@ -80,7 +80,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `<table role="presentation" class="container" width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;min-width:680px;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;word-break:keep-all;">`,
 
     // [1] HEADER
-    `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;">`,
+    `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;background:${C.cream200};">`,
     `<table class="header-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
     `<td valign="top">`,
     `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">DAEKWANG · LOGEBIEN</div>`,
@@ -93,9 +93,6 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `</td>`,
     `</tr></table>`,
     `</td></tr>`,
-
-    // [2] divider
-    `<tr><td class="px-outer" style="padding:0 40px;"><div style="height:1px;background:${C.cream300};"></div></td></tr>`,
 
     // [3] AI REPORT
     `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
