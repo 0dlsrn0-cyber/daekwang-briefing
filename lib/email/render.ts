@@ -84,7 +84,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `<table class="header-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
     `<td valign="top">`,
     `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">DAEKWANG · LOGEBIEN</div>`,
-    `<div class="h1" style="font-size:30px;font-weight:700;color:${C.ink900};letter-spacing:-1px;line-height:1.18;margin-bottom:10px;">부동산 동향<br>심층 분석 브리핑</div>`,
+    `<div class="h1" style="font-size:26px;font-weight:700;color:${C.ink900};letter-spacing:-1px;line-height:1.2;margin-bottom:8px;white-space:nowrap;">부동산 동향 심층 분석 브리핑</div>`,
     `<div style="font-size:13px;color:${C.ink500};letter-spacing:0.2px;">Real Estate Market Intelligence Report</div>`,
     `</td>`,
     `<td class="right-meta" valign="top" align="right" width="140" style="padding-left:16px;width:140px;">`,
@@ -92,15 +92,6 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `<div style="font-size:15px;color:${C.ink800};font-weight:700;letter-spacing:-0.3px;">${today}</div>`,
     `</td>`,
     `</tr></table>`,
-
-    // 메타 칩 (수집 건수, AI 엔진, ECOS)
-    `<div style="margin-top:20px;line-height:0;">`,
-    `<span class="chip" style="display:inline-block;background:${C.cream100};border:1px solid ${C.cream300};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.ink700};font-weight:600;letter-spacing:0.3px;margin-right:6px;line-height:1.4;">수집 ${newsCount}건</span>`,
-    `<span class="chip" style="display:inline-block;background:${C.cream100};border:1px solid ${C.cream300};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.ink700};font-weight:600;letter-spacing:0.3px;margin-right:6px;line-height:1.4;">${modelLabel}</span>`,
-    hasEcos
-      ? `<span class="chip" style="display:inline-block;background:${C.terra50};border:1px solid ${C.terra100};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.terra700};font-weight:700;letter-spacing:0.3px;line-height:1.4;">● ECOS 11대 지표 LIVE</span>`
-      : "",
-    `</div>`,
     `</td></tr>`,
 
     // [2] divider
@@ -109,7 +100,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     // [3] AI REPORT
     `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
     `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;"><tr>`,
-    `<td valign="middle"><span class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;text-transform:uppercase;">AI Deep Analysis Report</span></td>`,
+    `<td valign="middle"><span style="display:inline-block;background:${C.ink800};color:${C.cream50};border-radius:4px;padding:5px 11px;font-size:10px;font-weight:700;letter-spacing:1.5px;white-space:nowrap;">AI DEEP ANALYSIS REPORT</span></td>`,
     `<td valign="middle" align="right"><span style="display:inline-block;background:${C.ink800};color:${C.cream50};border-radius:4px;padding:5px 11px;font-size:10px;font-weight:700;letter-spacing:1.2px;white-space:nowrap;">대광그룹 주택관리팀</span></td>`,
     `</tr></table>`,
     reportHtml,
@@ -145,6 +136,13 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `<div style="font-size:11px;color:${C.ink500};line-height:1.7;">대광그룹 주택관리팀<br>Daekwang Group · Housing Management Team</div>`,
     `</td>`,
     `<td class="footer-right" valign="top" align="right" style="padding-left:16px;">`,
+    `<div style="margin-bottom:10px;">`,
+    `<span style="display:inline-block;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.ink700};font-weight:600;margin:0 0 4px 4px;">수집 ${newsCount}건</span>`,
+    `<span style="display:inline-block;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.ink700};font-weight:600;margin:0 0 4px 4px;">${modelLabel}</span>`,
+    hasEcos
+      ? `<span style="display:inline-block;background:${C.terra50};border:1px solid ${C.terra100};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.terra700};font-weight:700;margin:0 0 4px 4px;">● ECOS LIVE</span>`
+      : "",
+    `</div>`,
     `<div style="font-size:10px;color:${C.ink500};line-height:1.7;">본 보고서는 Google News RSS${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
     `<div style="font-size:10px;color:${C.ink400};margin-top:10px;letter-spacing:0.5px;">CONFIDENTIAL · INTERNAL USE ONLY · © Daekwang Group</div>`,
     `</td></tr></table>`,
