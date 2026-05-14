@@ -1,5 +1,6 @@
 import { emailMdToHtml } from "../markdown";
 import { MODEL_LABELS } from "../ai";
+import { AI_DX_CATEGORY } from "../news";
 import type { BriefingResult, NewsItem } from "../types";
 
 // 웹과 통일된 Anthropic 톤 (globals.css 토큰과 동기화)
@@ -124,10 +125,13 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
         `</td></tr>`
       : "",
 
-    // [5] divider
+    // [5] AI/DX SIGNAL (항상 노출)
+    `<tr><td class="px-outer" style="padding:0 40px 30px;">${renderAiDxHtml(news)}</td></tr>`,
+
+    // [6] divider
     `<tr><td class="px-outer" style="padding:0 40px;"><div style="height:1px;background:${C.cream300};"></div></td></tr>`,
 
-    // [6] NEWS
+    // [7] NEWS
     `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
     `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">수집 뉴스 원문 <span style="color:${C.ink400};font-weight:500;margin-left:6px;letter-spacing:0.5px;">· 총 ${newsCount}건</span></div>`,
     newsHtml,
@@ -150,6 +154,48 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
     `</td></tr></table>`,
     `</body></html>`,
   ].join("");
+}
+
+function renderAiDxHtml(news: NewsItem[]): string {
+  const allItems = (news || []).filter((n) => n.category === AI_DX_CATEGORY);
+  const items = allItems.slice(0, 3);
+  const hasItems = allItems.length > 0;
+
+  const itemHtml = hasItems
+    ? items
+        .map(
+          (n, idx) =>
+            `<tr><td style="padding:11px 0;border-bottom:1px solid ${C.cream300};">` +
+            `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
+            `<td valign="top" width="32" style="padding-top:2px;">` +
+            `<div style="width:24px;height:24px;background:${C.ink800};color:${C.cream50};border-radius:6px;text-align:center;line-height:24px;font-size:11px;font-weight:700;">${idx + 1}</div>` +
+            `</td>` +
+            `<td valign="top">` +
+            `<a href="${n.link}" style="font-size:14px;color:${C.ink900};text-decoration:none;line-height:1.55;font-weight:600;">${n.title}</a>` +
+            `<div style="font-size:11px;color:${C.ink500};line-height:1.7;margin-top:4px;">검토 포인트: 분양 상담, 마케팅 자동화, 원가·공정, 문서 검토, 입지 분석 업무와의 연결성</div>` +
+            `</td>` +
+            `</tr></table></td></tr>`,
+        )
+        .join("")
+    : `<tr><td style="padding:14px 0;">` +
+      `<div style="background:${C.cream100};border:1px dashed ${C.cream400};border-radius:8px;padding:16px 18px;font-size:13px;color:${C.ink700};line-height:1.7;">` +
+      `<strong style="color:${C.ink900};">오늘은 부동산·건설·분양 업무와 직접 연결되는 AI/DX 주요 기사가 확인되지 않았습니다.</strong><br>` +
+      `금일 브리핑은 정책, 금리, 분양시장, 원가 리스크 판단을 우선합니다.` +
+      `</div></td></tr>`;
+
+  return (
+    `<div style="background:${C.cream50};border:1px solid ${C.cream300};border-radius:12px;overflow:hidden;">` +
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${C.terra50};">` +
+    `<tr><td valign="middle" style="padding:14px 18px;">` +
+    `<span style="display:inline-block;background:${C.terra600};color:#ffffff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1.2px;">AI/DX SIGNAL</span>` +
+    `<span style="font-size:14px;font-weight:700;color:${C.ink900};margin-left:10px;letter-spacing:-0.3px;">오늘의 부동산 AI/DX 시그널</span>` +
+    `</td><td valign="middle" align="right" style="padding:14px 18px;">` +
+    `<span style="font-size:11px;color:${hasItems ? C.success : C.ink500};font-weight:700;white-space:nowrap;">${hasItems ? allItems.length + "건 감지" : "직접 관련 기사 없음"}</span>` +
+    `</td></tr></table>` +
+    `<div style="padding:4px 18px 16px;background:${C.cream50};">` +
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${itemHtml}</table>` +
+    `</div></div>`
+  );
 }
 
 function renderNewsHtml(news: NewsItem[]): string {
