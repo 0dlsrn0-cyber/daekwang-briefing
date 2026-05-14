@@ -2,55 +2,74 @@ import { emailMdToHtml } from "../markdown";
 import { MODEL_LABELS } from "../ai";
 import type { BriefingResult, NewsItem } from "../types";
 
-const SECTION_STYLES = [
-  {
-    numBg: "#1B365D",
-    numColor: "#C9A84C",
-    borderColor: "#1B365D",
-    headerBg: "#F3F6FB",
-    contentBg: "#F7FAFF",
-    itemBorder: "#D8E2F2",
-  },
-  {
-    numBg: "#264D85",
-    numColor: "#FFFFFF",
-    borderColor: "#264D85",
-    headerBg: "#F3F7FD",
-    contentBg: "#F8FBFF",
-    itemBorder: "#D9E6F7",
-  },
-  {
-    numBg: "#1A4D3C",
-    numColor: "#FFFFFF",
-    borderColor: "#1A4D3C",
-    headerBg: "#F3FAF7",
-    contentBg: "#F7FCFA",
-    itemBorder: "#D8ECE4",
-  },
-  {
-    numBg: "#4D1A3C",
-    numColor: "#FFFFFF",
-    borderColor: "#4D1A3C",
-    headerBg: "#FCF5FA",
-    contentBg: "#FFF9FD",
-    itemBorder: "#EAD8E4",
-  },
-];
-
-const FOCUS_STYLE = {
-  numBg: "#7B5E2A",
-  numColor: "#FFE89A",
-  borderColor: "#C9A84C",
-  headerBg: "#FFF8E1",
-  contentBg: "#FFFCF2",
-  itemBorder: "#E8D7A4",
+// 웹과 통일된 Anthropic 톤 (globals.css 토큰과 동기화)
+const C = {
+  cream50: "#faf9f5",
+  cream100: "#f5f1e8",
+  cream200: "#f0eee6",
+  cream300: "#e8e2d5",
+  cream400: "#d4cdb8",
+  ink900: "#1a1715",
+  ink800: "#2c2622",
+  ink700: "#3d342f",
+  ink600: "#57534e",
+  ink500: "#78716c",
+  ink400: "#a8a29e",
+  terra700: "#b04e30",
+  terra600: "#c2603f",
+  terra500: "#d97757",
+  terra100: "#fbeee6",
+  terra50: "#fdf6f1",
+  success: "#2d6a4f",
+  danger: "#b03a2e",
 };
+
+const FONT_STACK =
+  "'Noto Sans KR','Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif";
 
 const CSI_KEYS_MAP: Record<string, boolean> = {
   csi: true,
   debtCsi: true,
   ccsi: true,
 };
+
+// 600px 이하에서 적용되는 모바일 보정. 인라인 스타일을 미디어쿼리로 오버라이드한다.
+const RESPONSIVE_CSS = `
+  body { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table { border-collapse: collapse !important; }
+  img { -ms-interpolation-mode: bicubic; }
+  a { text-decoration: none; }
+
+  @media only screen and (max-width: 600px) {
+    .container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; }
+    .px-outer { padding-left: 20px !important; padding-right: 20px !important; }
+    .py-block { padding-top: 24px !important; padding-bottom: 24px !important; }
+    .h1 { font-size: 24px !important; line-height: 1.22 !important; }
+    .h2 { font-size: 15px !important; }
+    .eyebrow { font-size: 10px !important; letter-spacing: 1.8px !important; }
+    .header-row > tbody > tr > td.right-meta {
+      display: block !important;
+      width: 100% !important;
+      text-align: left !important;
+      padding: 14px 0 0 0 !important;
+    }
+    .rate-cell {
+      width: 50% !important;
+      display: inline-block !important;
+      box-sizing: border-box !important;
+    }
+    .trend-hide { display: none !important; }
+    .footer-row > tbody > tr > td.footer-right {
+      display: block !important;
+      width: 100% !important;
+      text-align: left !important;
+      padding: 14px 0 0 0 !important;
+    }
+    .section-num { width: 30px !important; height: 30px !important; line-height: 30px !important; font-size: 12px !important; }
+    .news-title { font-size: 14px !important; }
+    .chip { margin-bottom: 6px !important; }
+  }
+`;
 
 export function buildBriefingEmailHtml(result: BriefingResult): string {
   const news = result.news || [];
@@ -71,106 +90,92 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
   const reportHtml = renderReportHtml(aiReport);
 
   return [
-    '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"></head>',
-    "<body style=\"margin:0;padding:20px;background:#E4EBF5;font-family:'Malgun Gothic','Apple SD Gothic Neo',dotum,sans-serif;\">",
-    '<table width="680" align="center" cellpadding="0" cellspacing="0" border="0" style="max-width:680px;width:100%;margin:0 auto;background:#FFFFFF;">',
+    `<!DOCTYPE html><html lang="ko"><head>`,
+    `<meta charset="UTF-8">`,
+    `<meta name="viewport" content="width=device-width,initial-scale=1">`,
+    `<meta name="x-apple-disable-message-reformatting">`,
+    `<meta http-equiv="X-UA-Compatible" content="IE=edge">`,
+    `<title>대광 로제비앙 부동산 동향 브리핑</title>`,
+    `<style>${RESPONSIVE_CSS}</style>`,
+    `</head>`,
+    `<body style="margin:0;padding:0;background:${C.cream100};font-family:${FONT_STACK};color:${C.ink800};-webkit-font-smoothing:antialiased;">`,
 
-    // [1] Top classification banner
-    '<tr><td style="background:#060F20;padding:6px 24px;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td style="font-size:9px;color:#C9A84C;font-weight:700;letter-spacing:2.5px;">INTERNAL USE ONLY</td>',
-    '<td style="font-size:9px;color:#374050;letter-spacing:1px;text-align:right;">DAEKWANG GROUP &middot; HOUSING MANAGEMENT TEAM</td>',
-    "</tr></table></td></tr>",
+    // 받은편지함 미리보기 텍스트
+    `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;color:${C.cream100};">부동산 동향 심층 분석 브리핑 · ${today} · 수집 뉴스 ${newsCount}건${hasEcos ? " · ECOS 11대 지표" : ""}</div>`,
 
-    // [2] Header
-    '<tr><td style="background:linear-gradient(135deg,#060F20 0%,#172A45 100%);padding:0;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td style="padding:36px 24px 36px 32px;" valign="top">',
-    '<div style="font-size:10px;color:#C9A84C;font-weight:700;letter-spacing:3px;margin-bottom:14px;">DAEKWANG GROUP &middot; LOGEBIEN</div>',
-    '<div style="font-size:24px;font-weight:900;color:#FFFFFF;letter-spacing:-1.5px;line-height:1.2;margin-bottom:10px;">부동산 동향<br>심층 분석 브리핑</div>',
-    '<div style="font-size:11px;color:#4A5E70;letter-spacing:0.5px;">Real Estate Market Intelligence Report</div>',
+    // 바깥 래퍼
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.cream100};">`,
+    `<tr><td align="center" style="padding:28px 16px;">`,
+    `<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;">`,
+
+    // [1] HEADER
+    `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;">`,
+    `<table class="header-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
+    `<td valign="top">`,
+    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">DAEKWANG · LOGEBIEN</div>`,
+    `<div class="h1" style="font-size:30px;font-weight:700;color:${C.ink900};letter-spacing:-1px;line-height:1.18;margin-bottom:10px;">부동산 동향<br>심층 분석 브리핑</div>`,
+    `<div style="font-size:13px;color:${C.ink500};letter-spacing:0.2px;">Real Estate Market Intelligence Report</div>`,
+    `</td>`,
+    `<td class="right-meta" valign="top" align="right" style="padding-left:16px;width:130px;">`,
+    `<div style="font-size:10px;color:${C.ink400};letter-spacing:1.8px;font-weight:600;margin-bottom:4px;">REPORT DATE</div>`,
+    `<div style="font-size:15px;color:${C.ink800};font-weight:700;letter-spacing:-0.3px;">${today}</div>`,
+    `</td>`,
+    `</tr></table>`,
+
+    // 메타 칩 (수집 건수, AI 엔진, ECOS)
+    `<div style="margin-top:20px;line-height:0;">`,
+    `<span class="chip" style="display:inline-block;background:${C.cream100};border:1px solid ${C.cream300};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.ink700};font-weight:600;letter-spacing:0.3px;margin-right:6px;line-height:1.4;">수집 ${newsCount}건</span>`,
+    `<span class="chip" style="display:inline-block;background:${C.cream100};border:1px solid ${C.cream300};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.ink700};font-weight:600;letter-spacing:0.3px;margin-right:6px;line-height:1.4;">${modelLabel}</span>`,
     hasEcos
-      ? '<div style="margin-top:10px;display:inline-block;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:3px;padding:3px 10px;font-size:10px;color:#C9A84C;letter-spacing:1px;">&#127979; ECOS 11대 지표 통합 분석</div>'
+      ? `<span class="chip" style="display:inline-block;background:${C.terra50};border:1px solid ${C.terra100};border-radius:20px;padding:6px 14px;font-size:11px;color:${C.terra700};font-weight:700;letter-spacing:0.3px;line-height:1.4;">● ECOS 11대 지표 LIVE</span>`
       : "",
-    "</td>",
-    '<td style="padding:32px 32px 32px 0;vertical-align:top;width:185px;">',
-    '<table cellpadding="0" cellspacing="0" align="right" style="background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:6px;">',
-    '<tr><td style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">',
-    '<div style="font-size:9px;color:#4A5E70;letter-spacing:2px;margin-bottom:4px;">REPORT DATE</div>',
-    `<div style="font-size:12px;color:#FFFFFF;font-weight:700;">${today}</div>`,
-    "</td></tr>",
-    '<tr><td style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">',
-    '<div style="font-size:9px;color:#4A5E70;letter-spacing:2px;margin-bottom:4px;">수집 기사</div>',
-    `<div style="font-size:20px;color:#C9A84C;font-weight:900;line-height:1;">${newsCount}<span style="font-size:10px;color:#4A5E70;font-weight:400;"> 건</span></div>`,
-    "</td></tr>",
-    '<tr><td style="padding:12px 16px;">',
-    '<div style="font-size:9px;color:#4A5E70;letter-spacing:2px;margin-bottom:4px;">AI ENGINE</div>',
-    `<div style="font-size:10px;color:#8A9BB0;line-height:1.5;">${modelLabel}</div>`,
-    "</td></tr>",
-    "</table></td>",
-    "</tr></table></td></tr>",
+    `</div>`,
+    `</td></tr>`,
 
-    // [3] Gold accent line
-    '<tr><td style="height:3px;font-size:0;line-height:0;background:linear-gradient(90deg,#6A4F28,#C9A84C,#E5C96A,#C9A84C,#6A4F28);">&nbsp;</td></tr>',
+    // [2] divider
+    `<tr><td class="px-outer" style="padding:0 40px;"><div style="height:1px;background:${C.cream300};"></div></td></tr>`,
 
-    // [4] Report label
-    '<tr><td style="padding:18px 32px 12px;background:#FAFBFD;border-bottom:1px solid #EDF0F7;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td><span style="font-size:11px;font-weight:800;color:#C9A84C;letter-spacing:2px;">AI DEEP ANALYSIS REPORT</span>',
+    // [3] AI REPORT
+    `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
+    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">AI Deep Analysis Report</div>`,
+    reportHtml,
+    `</td></tr>`,
+
+    // [4] ECOS
     hasEcos
-      ? '<span style="font-size:9px;color:#059669;font-weight:600;margin-left:10px;background:#ECFDF5;padding:2px 8px;border-radius:3px;border:1px solid #A7F3D0;">ECOS LIVE</span>'
-      : "",
-    "</td>",
-    '<td style="text-align:right;"><span style="background:#1B365D;border-radius:3px;padding:4px 10px;font-size:9px;color:#FFFFFF;font-weight:700;letter-spacing:1px;">대광그룹 주택관리팀</span></td>',
-    "</tr></table></td></tr>",
-
-    // [5] AI report body
-    `<tr><td style="padding:24px 32px 20px;background:#FAFBFD;">${reportHtml}</td></tr>`,
-
-    // [6] ECOS section
-    hasEcos
-      ? `<tr><td style="padding:0 32px 28px;background:#FAFBFD;">` +
-        `<div style="border-top:2px solid #1B365D;padding-top:18px;">` +
-        `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;"><tr>` +
-        `<td><span style="background:linear-gradient(135deg,#1B365D,#264D85);color:#FFFFFF;font-size:10px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1px;">ECOS DATA</span>` +
-        `<span style="font-size:13px;font-weight:700;color:#1B365D;margin-left:8px;">한국은행 금융·심리 11대 지표</span></td>` +
-        `<td style="text-align:right;"><span style="font-size:10px;color:#9AA3AE;">${rateData?.fetchedAt || today} 기준</span></td>` +
-        `</tr></table>${rateHtml}</div></td></tr>`
+      ? `<tr><td class="px-outer" style="padding:0 40px 30px;">` +
+        `<div style="height:1px;background:${C.cream300};margin-bottom:26px;"></div>` +
+        `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:14px;text-transform:uppercase;">ECOS · 한국은행 11대 지표</div>` +
+        `<div style="font-size:11px;color:${C.ink400};margin-bottom:14px;">${rateData?.fetchedAt || today} 기준</div>` +
+        rateHtml +
+        `</td></tr>`
       : "",
 
-    // [7] Visual break
-    '<tr><td style="background:linear-gradient(to right,#DDE3F0,#E8EDF5,#DDE3F0);height:8px;font-size:0;">&nbsp;</td></tr>',
+    // [5] divider
+    `<tr><td class="px-outer" style="padding:0 40px;"><div style="height:1px;background:${C.cream300};"></div></td></tr>`,
 
-    // [8] News header
-    '<tr><td style="padding:26px 32px 14px;background:#FFFFFF;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td><span style="font-size:14px;font-weight:800;color:#0D1F3C;letter-spacing:-0.5px;">수집 뉴스 원문</span></td>',
-    `<td style="text-align:right;"><span style="font-size:11px;color:#9AA3AE;">총 ${newsCount}건</span></td>`,
-    '</tr><tr><td colspan="2" style="padding-top:6px;"><div style="height:2px;background:linear-gradient(90deg,#1B365D,rgba(27,54,93,0));"></div></td></tr>',
-    "</table></td></tr>",
+    // [6] NEWS
+    `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
+    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">수집 뉴스 원문 <span style="color:${C.ink400};font-weight:500;margin-left:6px;letter-spacing:0.5px;">· 총 ${newsCount}건</span></div>`,
+    newsHtml,
+    `</td></tr>`,
 
-    // [9] News items
-    `<tr><td style="padding:0 32px 32px;background:#FFFFFF;">${newsHtml}</td></tr>`,
+    // [7] FOOTER
+    `<tr><td class="px-outer" style="padding:28px 40px;background:${C.cream200};">`,
+    `<table class="footer-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
+    `<td valign="top">`,
+    `<div style="font-size:18px;font-weight:700;color:${C.ink800};letter-spacing:-0.5px;margin-bottom:4px;">대광<span style="color:${C.terra600};">로제비앙</span></div>`,
+    `<div style="font-size:11px;color:${C.ink500};line-height:1.7;">대광그룹 주택관리팀<br>Daekwang Group · Housing Management Team</div>`,
+    `</td>`,
+    `<td class="footer-right" valign="top" align="right" style="padding-left:16px;">`,
+    `<div style="font-size:10px;color:${C.ink500};line-height:1.7;">본 보고서는 Google News RSS${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
+    `<div style="font-size:10px;color:${C.ink400};margin-top:10px;letter-spacing:0.5px;">CONFIDENTIAL · INTERNAL USE ONLY · © Daekwang Group</div>`,
+    `</td></tr></table>`,
+    `</td></tr>`,
 
-    // [10] Footer
-    '<tr><td style="background:linear-gradient(135deg,#060F20,#0D1F3C);padding:28px 32px;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td valign="top">',
-    '<div style="font-size:20px;font-weight:900;color:#FFFFFF;letter-spacing:-1px;margin-bottom:6px;">대광<span style="color:#C9A84C;">로제비앙</span></div>',
-    '<div style="font-size:11px;color:#374050;line-height:1.7;">대광그룹 주택관리팀<br>Daekwang Group &middot; Housing Management Team</div>',
-    "</td>",
-    '<td style="text-align:right;vertical-align:top;padding-left:20px;">',
-    `<div style="font-size:10px;color:#374050;line-height:1.9;">본 보고서는 Google News RSS${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.<br><span style="color:#2A3040;">&copy; Daekwang Group. All rights reserved.</span></div>`,
-    "</td></tr></table></td></tr>",
-
-    // [11] Bottom classification strip
-    '<tr><td style="background:#C9A84C;padding:5px 24px;">',
-    '<table width="100%" cellpadding="0" cellspacing="0"><tr>',
-    '<td style="font-size:9px;color:#3A2800;font-weight:800;letter-spacing:2.5px;">CONFIDENTIAL</td>',
-    '<td style="font-size:9px;color:#5A4000;letter-spacing:1px;text-align:right;">외부 유출 금지 &middot; For Internal Distribution Only</td>',
-    "</tr></table></td></tr>",
-
-    "</table></body></html>",
+    `</table>`,
+    `</td></tr></table>`,
+    `</body></html>`,
   ].join("");
 }
 
@@ -188,32 +193,34 @@ function renderNewsHtml(news: NewsItem[]): string {
       const rows = items
         .map((n) => {
           rowNum++;
-          const bg = rowNum % 2 === 1 ? "#FFFFFF" : "#F8FAFC";
           return (
-            `<tr><td style="background:${bg};padding:9px 0;border-bottom:1px solid #EFF2F8;">` +
-            '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
-            `<td width="22" valign="top" style="font-size:11px;color:#C9A84C;font-weight:700;padding-top:3px;">${rowNum}.</td>` +
-            `<td><a href="${n.link}" style="font-size:13px;color:#1B365D;text-decoration:none;line-height:1.75;font-weight:500;">${n.title}</a></td>` +
-            "</tr></table></td></tr>"
+            `<tr><td style="padding:11px 0;border-bottom:1px solid ${C.cream300};">` +
+            `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
+            `<td valign="top" width="32" style="font-size:11px;color:${C.terra600};font-weight:700;padding-top:3px;letter-spacing:0;">${String(rowNum).padStart(2, "0")}</td>` +
+            `<td><a href="${n.link}" class="news-title" style="font-size:14px;color:${C.ink800};text-decoration:none;line-height:1.6;font-weight:500;">${n.title}</a></td>` +
+            `</tr></table></td></tr>`
           );
         })
         .join("");
       return (
-        '<div style="margin-bottom:22px;">' +
-        '<div style="margin-bottom:8px;">' +
-        `<span style="display:inline-block;background:#1B365D;padding:4px 10px;border-radius:3px;font-size:10px;font-weight:800;color:#FFFFFF;letter-spacing:1.5px;">${cat}</span>` +
-        `<span style="font-size:11px;color:#9AA3AE;margin-left:8px;">${items.length}건</span>` +
-        "</div>" +
-        '<table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid #1B365D;">' +
+        `<div style="margin-bottom:24px;">` +
+        `<div style="margin-bottom:8px;">` +
+        `<span style="display:inline-block;width:6px;height:6px;background:${C.terra500};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>` +
+        `<span style="font-size:12px;color:${C.ink800};font-weight:700;letter-spacing:0.2px;vertical-align:middle;">${cat}</span>` +
+        `<span style="font-size:11px;color:${C.ink400};font-weight:500;margin-left:8px;vertical-align:middle;">${items.length}건</span>` +
+        `</div>` +
+        `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">` +
         rows +
-        "</table>" +
-        "</div>"
+        `</table>` +
+        `</div>`
       );
     })
     .join("");
 }
 
-function renderRateHtml(rateData: NonNullable<BriefingResult["rateData"]>): string {
+function renderRateHtml(
+  rateData: NonNullable<BriefingResult["rateData"]>,
+): string {
   const rd = rateData.rates;
   const rateItems = [
     { label: "기준금리", rate: rd.baseRate, csi: false },
@@ -229,24 +236,29 @@ function renderRateHtml(rateData: NonNullable<BriefingResult["rateData"]>): stri
     { label: "소비자심리(CCSI)", rate: rd.ccsi, csi: true },
   ];
 
-  let html =
-    '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-family:Malgun Gothic,Apple SD Gothic Neo,dotum,sans-serif;">';
-  for (let ri = 0; ri < rateItems.length; ri++) {
-    if (ri % 4 === 0) html += "<tr>";
-    const item = rateItems[ri];
-    const val =
-      item.rate && item.rate.rate
-        ? item.rate.rate + (item.csi ? "p" : "%")
-        : "N/A";
-    const valColor = item.csi ? "#059669" : "#1B365D";
-    html +=
-      `<td width="25%" style="padding:10px 6px;text-align:center;border:1px solid #E8EDF5;background:#FFFFFF;">` +
-      `<div style="font-size:10px;color:#8892A4;font-weight:700;margin-bottom:4px;letter-spacing:-0.3px;">${item.label}</div>` +
-      `<div style="font-size:16px;font-weight:900;color:${valColor};line-height:1;font-family:Malgun Gothic,Apple SD Gothic Neo,dotum,sans-serif;letter-spacing:0;">${val}</div>` +
-      "</td>";
-    if (ri % 4 === 3 || ri === rateItems.length - 1) html += "</tr>";
+  let html = `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">`;
+  for (let i = 0; i < rateItems.length; i += 4) {
+    html += `<tr>`;
+    for (let j = 0; j < 4; j++) {
+      const item = rateItems[i + j];
+      if (!item) {
+        html += `<td class="rate-cell" width="25%" style="background:transparent;border:0;"></td>`;
+        continue;
+      }
+      const val =
+        item.rate && item.rate.rate
+          ? item.rate.rate + (item.csi ? "p" : "%")
+          : "N/A";
+      const valColor = item.csi ? C.success : C.ink900;
+      html +=
+        `<td class="rate-cell" width="25%" style="padding:14px 8px;text-align:center;border:1px solid ${C.cream300};background:${C.cream50};vertical-align:middle;">` +
+        `<div style="font-size:10px;color:${C.ink500};font-weight:600;margin-bottom:6px;letter-spacing:0.3px;">${item.label}</div>` +
+        `<div style="font-size:18px;font-weight:700;color:${valColor};line-height:1;letter-spacing:-0.3px;">${val}</div>` +
+        `</td>`;
+    }
+    html += `</tr>`;
   }
-  html += "</table>";
+  html += `</table>`;
 
   if (rateData.trends) {
     const trendOrder = [
@@ -277,42 +289,43 @@ function renderRateHtml(rateData: NonNullable<BriefingResult["rateData"]>): stri
           : null;
       const colorDelta = (v: string | null) => {
         if (v === null)
-          return '<td style="text-align:right;color:#9CA3AF;border:1px solid #E8EDF5;padding:6px 8px;">-</td>';
+          return `<td style="text-align:right;color:${C.ink400};border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;">-</td>`;
         const n = parseFloat(v);
-        const color = n > 0.005 ? "#DC2626" : n < -0.005 ? "#059669" : "#9CA3AF";
-        return `<td style="text-align:right;color:${color};font-weight:700;border:1px solid #E8EDF5;padding:6px 8px;font-size:11px;">${n > 0 ? "+" : ""}${v}${dUnit}</td>`;
+        const color = n > 0.005 ? C.danger : n < -0.005 ? C.success : C.ink400;
+        return `<td style="text-align:right;color:${color};font-weight:700;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;">${n > 0 ? "+" : ""}${v}${dUnit}</td>`;
       };
       trendRows +=
-        "<tr>" +
-        `<td style="padding:6px 8px;font-weight:600;border:1px solid #E8EDF5;font-size:11px;color:#1B365D;">${t.label || key}</td>` +
-        `<td style="text-align:right;border:1px solid #E8EDF5;padding:6px 8px;font-size:11px;">${t.current.rate ? t.current.rate + unit : "-"}</td>` +
-        `<td style="text-align:right;border:1px solid #E8EDF5;padding:6px 8px;font-size:11px;">${t.ago3m ? t.ago3m.rate + unit : "-"}</td>` +
-        `<td style="text-align:right;border:1px solid #E8EDF5;padding:6px 8px;font-size:11px;">${t.ago12m ? t.ago12m.rate + unit : "-"}</td>` +
+        `<tr>` +
+        `<td style="padding:9px 10px;font-weight:600;border-bottom:1px solid ${C.cream300};font-size:11px;color:${C.ink800};">${t.label || key}</td>` +
+        `<td style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink800};font-weight:600;">${t.current.rate ? t.current.rate + unit : "-"}</td>` +
+        `<td class="trend-hide" style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago3m ? t.ago3m.rate + unit : "-"}</td>` +
+        `<td class="trend-hide" style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago12m ? t.ago12m.rate + unit : "-"}</td>` +
         colorDelta(d3) +
         colorDelta(d12) +
-        "</tr>";
+        `</tr>`;
     });
 
     html +=
-      '<div style="margin-top:14px;font-family:Malgun Gothic,Apple SD Gothic Neo,dotum,sans-serif;">' +
-      '<div style="font-size:10px;font-weight:700;color:#1B365D;margin-bottom:6px;letter-spacing:0.5px;">지표 변화 추이 (3M · 12M 전 대비)</div>' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">' +
-      '<tr style="background:#1B365D;">' +
-      '<th style="padding:7px 8px;text-align:left;color:#FFFFFF;font-size:10px;font-weight:600;border:1px solid #264D85;">지표</th>' +
-      '<th style="padding:7px 8px;text-align:right;color:#FFFFFF;font-size:10px;font-weight:600;border:1px solid #264D85;">현재</th>' +
-      '<th style="padding:7px 8px;text-align:right;color:#FFFFFF;font-size:10px;font-weight:600;border:1px solid #264D85;">3M 전</th>' +
-      '<th style="padding:7px 8px;text-align:right;color:#FFFFFF;font-size:10px;font-weight:600;border:1px solid #264D85;">12M 전</th>' +
-      '<th style="padding:7px 8px;text-align:right;color:#C9A84C;font-size:10px;font-weight:600;border:1px solid #264D85;">Δ3M</th>' +
-      '<th style="padding:7px 8px;text-align:right;color:#C9A84C;font-size:10px;font-weight:600;border:1px solid #264D85;">Δ12M</th>' +
-      "</tr>" +
+      `<div style="margin-top:24px;">` +
+      `<div style="font-size:11px;font-weight:700;color:${C.ink700};margin-bottom:10px;letter-spacing:0.5px;">지표 변화 추이 <span style="color:${C.ink400};font-weight:500;">(3M · 12M 전 대비)</span></div>` +
+      `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;background:${C.cream50};border:1px solid ${C.cream300};">` +
+      `<tr style="background:${C.cream200};">` +
+      `<th style="padding:9px 10px;text-align:left;color:${C.ink700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">지표</th>` +
+      `<th style="padding:9px 10px;text-align:right;color:${C.ink700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">현재</th>` +
+      `<th class="trend-hide" style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">3M 전</th>` +
+      `<th class="trend-hide" style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">12M 전</th>` +
+      `<th style="padding:9px 10px;text-align:right;color:${C.terra700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">Δ3M</th>` +
+      `<th style="padding:9px 10px;text-align:right;color:${C.terra700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">Δ12M</th>` +
+      `</tr>` +
       trendRows +
-      "</table></div>";
+      `</table></div>`;
 
     if (rd.mortgage && rd.mortgage.rate) {
       const annualRate = parseFloat(rd.mortgage.rate);
       const r = annualRate / 100 / 12;
       const n = 360;
-      let dsrRows = "";
+      let dsrCells = "";
+      let dsrHeaders = "";
       [
         [5, "5억"],
         [7, "7억"],
@@ -323,19 +336,18 @@ function renderRateHtml(rateData: NonNullable<BriefingResult["rateData"]>): stri
           r === 0
             ? loan / n
             : (loan * (r * Math.pow(1 + r, n))) / (Math.pow(1 + r, n) - 1);
-        dsrRows += `<td style="text-align:center;border:1px solid #E8EDF5;padding:8px;font-weight:700;color:#1B365D;font-size:13px;">월 ${Math.round(monthly / 10000).toLocaleString()}만원</td>`;
+        dsrHeaders += `<th style="padding:10px 8px;text-align:center;border:1px solid ${C.cream300};font-size:10px;color:${C.ink600};font-weight:600;background:${C.cream200};">분양가 ${pair[1]}</th>`;
+        dsrCells += `<td style="text-align:center;border:1px solid ${C.cream300};padding:14px 8px;font-weight:700;color:${C.ink900};font-size:14px;background:${C.cream50};">월 ${Math.round(monthly / 10000).toLocaleString()}만원</td>`;
       });
       html +=
-        '<div style="margin-top:14px;font-family:Malgun Gothic,Apple SD Gothic Neo,dotum,sans-serif;">' +
-        `<div style="font-size:10px;font-weight:700;color:#1B365D;margin-bottom:6px;">DSR 40% 기준 월상환 추산 <span style="font-weight:400;color:#6B7280;">(주담대 ${rd.mortgage.rate}%, 30년 원리금균등, LTV 70%)</span></div>` +
-        '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">' +
-        '<tr style="background:#F8FAFC;">' +
-        '<th style="padding:7px 8px;text-align:center;border:1px solid #E8EDF5;font-size:10px;color:#6B7280;font-weight:600;">분양가 5억</th>' +
-        '<th style="padding:7px 8px;text-align:center;border:1px solid #E8EDF5;font-size:10px;color:#6B7280;font-weight:600;">분양가 7억</th>' +
-        '<th style="padding:7px 8px;text-align:center;border:1px solid #E8EDF5;font-size:10px;color:#6B7280;font-weight:600;">분양가 10억</th>' +
-        "</tr><tr>" +
-        dsrRows +
-        "</tr></table></div>";
+        `<div style="margin-top:22px;">` +
+        `<div style="font-size:11px;font-weight:700;color:${C.ink700};margin-bottom:10px;letter-spacing:0.5px;">DSR 40% 기준 월상환 추산 <span style="color:${C.ink400};font-weight:500;">(주담대 ${rd.mortgage.rate}%, 30년 원리금균등, LTV 70%)</span></div>` +
+        `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">` +
+        `<tr>` +
+        dsrHeaders +
+        `</tr><tr>` +
+        dsrCells +
+        `</tr></table></div>`;
     }
   }
 
@@ -376,52 +388,52 @@ function renderReportHtml(aiReport: string): string {
   }
 
   if (sections.length === 0) {
-    return `<div style="font-size:13.5px;color:#2D3748;line-height:1.85;padding:18px 20px;border:1px solid #D8E2F2;border-top:4px solid #1B365D;background:#F7FAFF;border-radius:6px;">${emailMdToHtml(aiReport || "")}</div>`;
+    return `<div style="font-size:14px;color:${C.ink800};line-height:1.85;padding:22px 24px;background:${C.cream100};border:1px solid ${C.cream300};border-radius:12px;">${emailMdToHtml(aiReport || "")}</div>`;
   }
 
   return sections
     .map((sec, idx) => {
-      const s = sec.isFocus
-        ? FOCUS_STYLE
-        : SECTION_STYLES[idx % SECTION_STYLES.length];
-      let num = idx < 9 ? "0" + (idx + 1) : String(idx + 1);
-      if (sec.isFocus) num = "★";
+      const isFocus = sec.isFocus;
+      const accentColor = isFocus ? C.terra700 : C.terra600;
+      const num = isFocus ? "★" : String(idx + 1).padStart(2, "0");
+      const cardBg = isFocus ? C.terra50 : C.cream50;
+      const cardBorder = isFocus ? C.terra100 : C.cream300;
+      const badgeBg = isFocus ? C.terra600 : C.ink800;
+      const badgeColor = isFocus ? "#ffffff" : C.cream50;
 
       const contentHtml = sec.lines
         .map((line) => {
           const t = line.trim();
-          if (!t) return '<div style="height:5px;"></div>';
-          if (/^[-─━=]{3,}$/.test(t)) return '<div style="height:6px;"></div>';
+          if (!t) return `<div style="height:6px;line-height:6px;font-size:0;">&nbsp;</div>`;
+          if (/^[-─━=]{3,}$/.test(t))
+            return `<div style="height:8px;line-height:8px;font-size:0;">&nbsp;</div>`;
           const processed = emailMdToHtml(t).replace(
             /^-\s*(왜[^:]*:|무엇을[^:]*:)/,
-            `- <strong style="color:${s.borderColor};">$1</strong>`,
+            `- <strong style="color:${accentColor};">$1</strong>`,
           );
           const isLvl1 =
             /^[가-하]\./.test(t) || /^[①-⑨]/.test(t) || /^\d+\)/.test(t);
           const isLvl2 = /^[-·•]\s/.test(t);
           if (isLvl1) {
-            return `<div style="margin:8px 0;padding:9px 12px;background:#FFFFFF;border:1px solid ${s.itemBorder};border-radius:4px;font-size:13px;color:#2D3748;line-height:1.85;letter-spacing:-0.2px;">${processed}</div>`;
+            return `<div style="margin:8px 0;padding:11px 14px;background:#ffffff;border:1px solid ${C.cream300};border-left:3px solid ${accentColor};border-radius:8px;font-size:14px;color:${C.ink800};line-height:1.75;">${processed}</div>`;
           }
           if (isLvl2) {
-            return `<div style="margin:5px 0 5px 12px;font-size:12.5px;color:#4A5568;line-height:1.8;">${processed}</div>`;
+            return `<div style="margin:5px 0 5px 14px;font-size:13.5px;color:${C.ink700};line-height:1.7;">${processed}</div>`;
           }
-          return `<div style="font-size:13.5px;color:#2D3748;line-height:1.85;margin:5px 0;letter-spacing:-0.3px;">${processed}</div>`;
+          return `<div style="font-size:14px;color:${C.ink800};line-height:1.75;margin:6px 0;">${processed}</div>`;
         })
         .join("");
 
-      const contentWrapper = `<div style="background:${s.contentBg};border-top:1px solid ${s.itemBorder};padding:16px 18px 18px;">${contentHtml}</div>`;
-
       return (
-        `<div style="margin-bottom:24px;background:#FFFFFF;border:1px solid ${s.itemBorder};border-top:4px solid ${s.borderColor};border-radius:6px;">` +
-        `<table width="100%" cellpadding="0" cellspacing="0" style="background:${s.headerBg};">` +
-        `<tr>` +
-        `<td width="42" valign="middle" style="padding:13px 0 13px 16px;">` +
-        `<div style="width:30px;height:30px;background:${s.numBg};border-radius:4px;text-align:center;line-height:30px;font-size:${sec.isFocus ? "14" : "12"}px;font-weight:900;color:${s.numColor};font-family:Malgun Gothic,Apple SD Gothic Neo,dotum,sans-serif;letter-spacing:0;">${num}</div>` +
+        `<div style="margin-bottom:20px;background:${cardBg};border:1px solid ${cardBorder};border-radius:12px;overflow:hidden;">` +
+        `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
+        `<td valign="middle" style="padding:16px 0 14px 18px;width:50px;">` +
+        `<div class="section-num" style="width:34px;height:34px;background:${badgeBg};color:${badgeColor};border-radius:8px;text-align:center;line-height:34px;font-size:${isFocus ? "15" : "13"}px;font-weight:700;letter-spacing:0;">${num}</div>` +
         `</td>` +
-        `<td valign="middle" style="padding:13px 16px 13px 10px;">` +
-        `<div style="font-size:15px;font-weight:800;color:#0D1F3C;letter-spacing:-0.5px;line-height:1.45;">${sec.title}</div>` +
+        `<td valign="middle" style="padding:16px 18px 14px 12px;">` +
+        `<div class="h2" style="font-size:16px;font-weight:700;color:${C.ink900};letter-spacing:-0.3px;line-height:1.4;">${sec.title}</div>` +
         `</td></tr></table>` +
-        contentWrapper +
+        `<div style="padding:0 18px 18px;">${contentHtml}</div>` +
         `</div>`
       );
     })
