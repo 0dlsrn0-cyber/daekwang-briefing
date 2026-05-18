@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { fetchAllNews } from "@/lib/news";
 import { fetchAllRates } from "@/lib/ecos";
 import { callAiAnalysis } from "@/lib/ai";
+import { extractConclusions } from "@/lib/ai/prompt";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type {
   AiModel,
@@ -122,6 +123,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let previousSummary: string | null = null;
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from("reports")
+          .select("conclusions_3lines")
+          .not("conclusions_3lines", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        previousSummary =
+          (data as { conclusions_3lines: string | null } | null)
+            ?.conclusions_3lines ?? null;
+      } catch (e) {
+        console.error("[supabase] previous conclusions fetch 실패:", e);
+      }
+    }
+
     let aiReport = "";
     let aiFailed = false;
     let aiError: string | null = null;
@@ -132,6 +151,7 @@ export async function POST(request: NextRequest) {
         newsResult.news,
         focusPoint,
         rateData,
+        previousSummary,
       );
     } catch (apiErr) {
       aiFailed = true;
@@ -156,12 +176,14 @@ export async function POST(request: NextRequest) {
       await logSafely("news_items insert", () =>
         supabase!.from("news_items").insert(newsRows),
       );
+      const conclusions = aiFailed ? null : extractConclusions(aiReport);
       await logSafely("reports insert", () =>
         supabase!.from("reports").insert({
           run_id: rid,
           ai_report: aiReport,
           rate_snapshot: rateData ?? null,
           news_count: newsResult.news.length,
+          conclusions_3lines: conclusions,
         }),
       );
       await markRun(aiFailed ? "partial" : "success", aiError);

@@ -1,6 +1,7 @@
 export type AiModel =
   | "gemini"
   | "gemini3"
+  | "gemini31"
   | "claude"
   | "openai"
   | "grok"
@@ -15,6 +16,7 @@ export interface NewsItem {
   title: string;
   link: string;
   pubDate: string;
+  body?: string;
 }
 
 export interface NewsResult {

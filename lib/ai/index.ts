@@ -13,6 +13,7 @@ import { callOpenRouter } from "./openrouter";
 export const MODEL_LABELS: Record<AiModel, string> = {
   gemini: "Google Gemini 2.5 Flash",
   gemini3: "Google Gemini 3 Pro (Preview)",
+  gemini31: "Google Gemini 3.1 Pro (Preview)",
   claude: "Claude Opus 4.7",
   grok: "xAI Grok-3",
   perplexity: "Perplexity Sonar Pro",
@@ -29,8 +30,9 @@ export async function callAiAnalysis(
   newsList: NewsItem[],
   focusPoint: string | undefined,
   rateData: RateData | null | undefined,
+  previousSummary?: string | null,
 ): Promise<string> {
-  const prompt = buildPrompt(newsList, focusPoint, rateData);
+  const prompt = buildPrompt(newsList, focusPoint, rateData, previousSummary);
 
   switch (aiModel) {
     case "claude":
@@ -51,6 +53,8 @@ export async function callAiAnalysis(
       return callOpenRouter(aiKey, prompt);
     case "gemini3":
       return callGemini(aiKey, prompt, "gemini-3-pro-preview");
+    case "gemini31":
+      return callGemini(aiKey, prompt, "gemini-3.1-pro-preview");
     case "gemini":
     default:
       return callGemini(aiKey, prompt);

@@ -1,7 +1,9 @@
 import { XMLParser } from "fast-xml-parser";
 import type { NewsItem, NewsResult } from "./types";
+import { fetchArticleBody } from "./article-body";
 
 export const AI_DX_CATEGORY = "부동산 AI/DX";
+const BODY_PER_CATEGORY = 4;
 
 const SEARCH_QUERIES = [
   { category: "정책/세금", query: "부동산 (정책 OR 세금 OR 규제 OR 대출)" },
@@ -11,6 +13,11 @@ const SEARCH_QUERIES = [
     category: "매크로/원자재",
     query:
       "(원자재 OR 철근 OR 시멘트 OR 건설자재 OR 환율 OR 연준 OR 기준금리 OR 인플레이션 OR PF) (건설 OR 부동산 OR 경제)",
+  },
+  {
+    category: "투자·운용",
+    query:
+      "(리츠 OR REITs OR 자산운용 OR AUM OR 운용사 OR 매각 OR 사옥 OR PF OR 신용공여 OR 펀드) (site:dealsite.co.kr OR site:thebell.co.kr OR site:bizhankook.com OR site:investchosun.com OR site:bloter.net OR site:realty.chosun.com)",
   },
   {
     category: AI_DX_CATEGORY,
@@ -70,6 +77,22 @@ export async function fetchAllNews(): Promise<NewsResult> {
       } catch (e) {
         errors.push(`${item.category}: ${(e as Error).message}`);
       }
+    }),
+  );
+
+  const seen = new Map<string, number>();
+  const bodyTargets: NewsItem[] = [];
+  for (const item of allNews) {
+    if (item.category === AI_DX_CATEGORY) continue;
+    const used = seen.get(item.category) ?? 0;
+    if (used >= BODY_PER_CATEGORY) continue;
+    bodyTargets.push(item);
+    seen.set(item.category, used + 1);
+  }
+  await Promise.all(
+    bodyTargets.map(async (item) => {
+      const body = await fetchArticleBody(item.link);
+      if (body) item.body = body;
     }),
   );
 
