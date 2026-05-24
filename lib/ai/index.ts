@@ -1,27 +1,10 @@
 import type { AiModel, NewsItem, RateData } from "../types";
 import { buildPrompt } from "./prompt";
 import { callGemini } from "./gemini";
-import { callClaude } from "./claude";
-import { callOpenAI } from "./openai";
-import { callGrok } from "./grok";
-import { callMistral } from "./mistral";
-import { callPerplexity } from "./perplexity";
-import { callGithubModels } from "./github-models";
-import { callCohere } from "./cohere";
-import { callOpenRouter } from "./openrouter";
 
 export const MODEL_LABELS: Record<AiModel, string> = {
   gemini: "Google Gemini 2.5 Flash",
-  gemini3: "Google Gemini 3 Pro (Preview)",
-  gemini31: "Google Gemini 3.1 Pro (Preview)",
-  claude: "Claude Opus 4.7",
-  grok: "xAI Grok-3",
-  perplexity: "Perplexity Sonar Pro",
-  openai: "OpenAI GPT-4o",
-  mistral: "Mistral Large",
-  github: "GitHub AI · gpt-4o-mini / Phi-4 / Llama",
-  cohere: "Cohere Command A (2025)",
-  openrouter: "OpenRouter · Llama 4 / Qwen3 / Mistral (Free)",
+  "gemini-flash-latest": "Google Gemini Flash Latest",
 };
 
 export async function callAiAnalysis(
@@ -35,26 +18,8 @@ export async function callAiAnalysis(
   const prompt = buildPrompt(newsList, focusPoint, rateData, previousSummary);
 
   switch (aiModel) {
-    case "claude":
-      return callClaude(aiKey, prompt);
-    case "grok":
-      return callGrok(aiKey, prompt);
-    case "perplexity":
-      return callPerplexity(aiKey, prompt);
-    case "openai":
-      return callOpenAI(aiKey, prompt);
-    case "mistral":
-      return callMistral(aiKey, prompt);
-    case "github":
-      return callGithubModels(aiKey, prompt);
-    case "cohere":
-      return callCohere(aiKey, prompt);
-    case "openrouter":
-      return callOpenRouter(aiKey, prompt);
-    case "gemini3":
-      return callGemini(aiKey, prompt, "gemini-3-pro-preview");
-    case "gemini31":
-      return callGemini(aiKey, prompt, "gemini-3.1-pro-preview");
+    case "gemini-flash-latest":
+      return callGemini(aiKey, prompt, "gemini-flash-latest");
     case "gemini":
     default:
       return callGemini(aiKey, prompt);

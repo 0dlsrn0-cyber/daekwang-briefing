@@ -1,11 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isValidAdminToken } from "@/lib/admin-auth";
-import { isValidAccessToken, ACCESS_COOKIE_NAME } from "@/lib/access-key";
+import {
+  signSsoSession,
+  verifySsoSession,
+  SSO_COOKIE_NAME,
+  SSO_TTL_MS,
+} from "@/lib/sso-session";
 
 // 1) 익명 추적용 session_id 쿠키 발급 (모든 경로)
 // 2) /admin/* 보호 — login 페이지 + login API만 예외
-// 3) 일반 사용자: 사이트 접근키 게이트 (홈/브리핑 API)
+// 3) 일반 사용자: 포털 SSO 게이트 (홈/브리핑 API)
+//    - 포털에서 ?ott=<supabase access_token> 으로 넘어오면 검증 후 sso_session 쿠키 발급
+//    - 유효한 sso_session 쿠키가 없으면 포털 로그인으로 리다이렉트
 //    - 관리자(admin_token 유효)는 게이트 우회
+
+// 포털(daekwang-sso) 토큰 인트로스펙션 — /auth/v1/user 로 현재 유효성 확인
+async function introspectSsoToken(token: string): Promise<string | null> {
+  const url = process.env.DAEKWANG_SSO_URL;
+  const anon = process.env.DAEKWANG_SSO_ANON_KEY;
+  if (!url || !anon) return null;
+  try {
+    const res = await fetch(`${url}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anon },
+    });
+    if (!res.ok) return null;
+    const user = (await res.json()) as { email?: string; id?: string };
+    return user?.email ?? user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function isAdminAreaPath(path: string): boolean {
   return (
@@ -40,6 +64,10 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const secret = process.env.ADMIN_SESSION_SECRET;
+  const isLocalDev =
+    process.env.NODE_ENV === "development" &&
+    (request.nextUrl.hostname === "127.0.0.1" ||
+      request.nextUrl.hostname === "localhost");
 
   // (A) 관리자 영역 보호
   const isAdminPage = path === "/admin" || path.startsWith("/admin/");
@@ -74,27 +102,55 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // (B) 일반 사용자 접근키 게이트
-  if (isGatedPath(path) && secret) {
+  // (B) 포털 SSO 게이트
+  if (isGatedPath(path) && !isLocalDev) {
     // 관리자 토큰이 유효하면 게이트 우회
     const adminToken = request.cookies.get("admin_token")?.value;
-    const isAdmin = adminToken
-      ? await isValidAdminToken(adminToken, secret)
-      : false;
+    const isAdmin =
+      secret && adminToken
+        ? await isValidAdminToken(adminToken, secret)
+        : false;
 
     if (!isAdmin) {
-      const accessToken = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
-      const hasAccess = await isValidAccessToken(accessToken, secret);
-      if (!hasAccess) {
-        if (path === "/") {
-          const url = new URL("/gate", request.url);
-          return NextResponse.redirect(url);
+      const ssoSecret = process.env.SSO_SESSION_SECRET;
+      const ott = request.nextUrl.searchParams.get("ott");
+
+      // 1) OTT 핸드오프: 포털에서 넘어온 토큰 검증 → sso_session 쿠키 발급 → ott 제거 리다이렉트
+      if (ott && ssoSecret) {
+        const email = await introspectSsoToken(ott);
+        if (email) {
+          const cleanUrl = new URL(request.url);
+          cleanUrl.searchParams.delete("ott");
+          const res = NextResponse.redirect(cleanUrl);
+          const cookie = await signSsoSession(email, ssoSecret);
+          res.cookies.set(SSO_COOKIE_NAME, cookie, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            maxAge: Math.floor(SSO_TTL_MS / 1000),
+            path: "/",
+          });
+          return res;
         }
-        // API 요청은 401
-        return NextResponse.json(
-          { success: false, error: "접근키 인증이 필요합니다." },
-          { status: 401 },
-        );
+      }
+
+      // 2) 기존 SSO 세션 쿠키 확인
+      const ssoCookie = request.cookies.get(SSO_COOKIE_NAME)?.value;
+      const session = ssoSecret
+        ? await verifySsoSession(ssoCookie, ssoSecret)
+        : null;
+
+      if (!session) {
+        // API 요청은 401, 페이지 요청은 포털 로그인으로 리다이렉트
+        if (path.startsWith("/api/")) {
+          return NextResponse.json(
+            { success: false, error: "SSO 인증이 필요합니다." },
+            { status: 401 },
+          );
+        }
+        const portalUrl =
+          process.env.PORTAL_URL || "https://dk-housing-ops.vercel.app";
+        return NextResponse.redirect(portalUrl);
       }
     }
   }

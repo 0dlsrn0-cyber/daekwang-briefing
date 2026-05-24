@@ -1,0 +1,12 @@
+node_modules
+.next
+.vercel
+.claude
+coverage
+build
+out
+.env*
+!.env.example
+*.log
+supabase/.temp
+Video Project.mp4

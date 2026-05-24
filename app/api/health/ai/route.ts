@@ -22,18 +22,7 @@ const PING_NEWS: NewsItem[] = [
   },
 ];
 
-const VALID_MODELS: AiModel[] = [
-  "gemini",
-  "gemini3",
-  "claude",
-  "openai",
-  "grok",
-  "mistral",
-  "perplexity",
-  "github",
-  "cohere",
-  "openrouter",
-];
+const VALID_MODELS: AiModel[] = ["gemini", "gemini-flash-latest"];
 
 export async function POST(request: NextRequest) {
   let body: { aiModel?: unknown; aiKey?: unknown };

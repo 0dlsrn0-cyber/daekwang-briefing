@@ -36,3 +36,12 @@ next-env.d.ts
 # IDE
 .idea
 .vscode
+
+# Claude Code (로컬 설정 — 배포/공유 금지)
+.claude/
+
+# Supabase CLI temp
+supabase/.temp/
+
+# 작업용 영상 (사이트와 무관, 22MB)
+Video Project.mp4

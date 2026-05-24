@@ -40,7 +40,10 @@ export async function POST(request: NextRequest) {
   }
 
   const aiKey = (params.aiKey || "").trim();
-  const aiModel: AiModel = params.aiModel || "gemini";
+  const aiModel: AiModel =
+    params.aiModel === "gemini-flash-latest"
+      ? "gemini-flash-latest"
+      : "gemini";
   const focusPoint = params.focusPoint?.trim() || "";
   const ecosKey = params.ecosKey?.trim() || "";
 

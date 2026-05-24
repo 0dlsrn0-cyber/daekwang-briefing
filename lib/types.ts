@@ -1,15 +1,4 @@
-export type AiModel =
-  | "gemini"
-  | "gemini3"
-  | "gemini31"
-  | "claude"
-  | "openai"
-  | "grok"
-  | "mistral"
-  | "perplexity"
-  | "github"
-  | "cohere"
-  | "openrouter";
+export type AiModel = "gemini" | "gemini-flash-latest";
 
 export interface NewsItem {
   category: string;

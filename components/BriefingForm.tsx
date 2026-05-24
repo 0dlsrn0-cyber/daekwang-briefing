@@ -5,17 +5,12 @@ import type { AiModel, BriefingResult } from "@/lib/types";
 
 const MODEL_OPTIONS: { value: AiModel; label: string }[] = [
   { value: "gemini", label: "Google Gemini 2.5 Flash" },
-  { value: "gemini3", label: "Google Gemini 3 Pro (Preview)" },
-  { value: "gemini31", label: "Google Gemini 3.1 Pro (Preview) — 고급" },
-  { value: "claude", label: "Claude Opus 4.7" },
-  { value: "openai", label: "OpenAI GPT-4o" },
-  { value: "grok", label: "xAI Grok-3" },
-  { value: "mistral", label: "Mistral Large" },
-  { value: "perplexity", label: "Perplexity Sonar Pro" },
-  { value: "github", label: "GitHub AI · gpt-4o-mini / Phi-4 / Llama" },
-  { value: "cohere", label: "Cohere Command A (2025)" },
-  { value: "openrouter", label: "OpenRouter · Llama 4 / Qwen3 / Mistral" },
+  { value: "gemini-flash-latest", label: "Google Gemini Flash Latest" },
 ];
+
+function normalizeAiModel(value: string | null): AiModel {
+  return value === "gemini-flash-latest" ? "gemini-flash-latest" : "gemini";
+}
 
 interface Props {
   onResult: (r: BriefingResult) => void;
@@ -32,7 +27,9 @@ export default function BriefingForm({ onResult, onLog }: Props) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setAiModel((sessionStorage.getItem("aiModel") as AiModel) || "gemini");
+    const savedModel = normalizeAiModel(sessionStorage.getItem("aiModel"));
+    setAiModel(savedModel);
+    sessionStorage.setItem("aiModel", savedModel);
     setAiKey(sessionStorage.getItem("aiKey") || "");
     setEcosKey(sessionStorage.getItem("ecosKey") || "");
     setFocusPoint(sessionStorage.getItem("focusPoint") || "");
@@ -101,7 +98,9 @@ export default function BriefingForm({ onResult, onLog }: Props) {
               </option>
             ))}
           </select>
-          <span className="input-hint">모델별 API 키 형식이 다릅니다.</span>
+          <span className="input-hint">
+            최신 alias는 Google이 Flash 계열 최신 모델로 자동 연결합니다.
+          </span>
         </div>
 
         <div className="form-group">
@@ -113,7 +112,7 @@ export default function BriefingForm({ onResult, onLog }: Props) {
               setAiKey(e.target.value);
               persist("aiKey", e.target.value);
             }}
-            placeholder="예: AIzaSy... / sk-... / sk-ant-..."
+            placeholder="예: AIzaSy..."
             disabled={running}
             required
           />

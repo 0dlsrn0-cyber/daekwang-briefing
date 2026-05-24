@@ -5,15 +5,7 @@ import type { AiModel } from "@/lib/types";
 
 const MODELS: { value: AiModel; label: string }[] = [
   { value: "gemini", label: "Google Gemini 2.5 Flash" },
-  { value: "gemini3", label: "Google Gemini 3 Pro (Preview)" },
-  { value: "claude", label: "Claude Opus 4.7" },
-  { value: "openai", label: "OpenAI GPT-4o" },
-  { value: "grok", label: "xAI Grok-3" },
-  { value: "mistral", label: "Mistral Large" },
-  { value: "perplexity", label: "Perplexity Sonar Pro" },
-  { value: "github", label: "GitHub Models" },
-  { value: "cohere", label: "Cohere Command A" },
-  { value: "openrouter", label: "OpenRouter (Free)" },
+  { value: "gemini-flash-latest", label: "Google Gemini Flash Latest" },
 ];
 
 type Status = "idle" | "running" | "ok" | "err";
@@ -109,12 +101,12 @@ export default function AiHealthCheck() {
               type="password"
               value={aiKey}
               onChange={(e) => setAiKey(e.target.value)}
-              placeholder="해당 모델 키 (한 번에 하나씩 모델별 테스트)"
+              placeholder="Google AI Studio API 키"
               disabled={busy}
             />
             <span className="input-hint">
-              각 모델은 자기 키만 통과합니다. 전체 테스트는 같은 키로 모두
-              호출하므로 보통 1개 모델만 OK 가 됩니다.
+              두 옵션 모두 Gemini API 키를 사용합니다. 최신 alias는 Google이
+              Flash 계열 최신 모델로 자동 연결합니다.
             </span>
           </div>
         </div>
