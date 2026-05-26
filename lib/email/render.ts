@@ -140,7 +140,7 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
       ? `<span style="display:inline-block;background:${C.terra50};border:1px solid ${C.terra100};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.terra700};font-weight:700;margin:0 0 4px 4px;">● ECOS LIVE</span>`
       : "",
     `</div>`,
-    `<div style="font-size:10px;color:${C.ink500};line-height:1.7;">본 보고서는 Google News RSS${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
+    `<div style="font-size:10px;color:${C.ink500};line-height:1.7;">본 보고서는 네이버·다음 뉴스${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
     `<div style="font-size:10px;color:${C.ink400};margin-top:10px;letter-spacing:0.5px;">CONFIDENTIAL · INTERNAL USE ONLY · © Daekwang Group</div>`,
     `</td></tr></table>`,
     `</td></tr>`,

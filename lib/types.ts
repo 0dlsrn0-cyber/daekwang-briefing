@@ -6,6 +6,7 @@ export interface NewsItem {
   link: string;
   pubDate: string;
   body?: string;
+  isLead?: boolean;
 }
 
 export interface NewsResult {
