@@ -617,6 +617,56 @@ textarea::placeholder {
   line-height: 1.55;
 }
 
+/* 요금제(무료/유료) 세그먼트 토글 */
+.tier-toggle {
+  display: flex;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tier-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease;
+}
+
+.tier-option + .tier-option {
+  border-left: 1px solid var(--line-strong);
+}
+
+.tier-option input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.tier-option.is-active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.tier-option.is-disabled {
+  color: var(--subtle);
+  background: var(--surface-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .btn-row,
 .action-bar,
 .modal-footer {

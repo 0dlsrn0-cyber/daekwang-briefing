@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { BriefingResult } from "@/lib/types";
+import type { AiAvailability, BriefingResult } from "@/lib/types";
 import BriefingForm from "./BriefingForm";
 import BriefingResultView from "./BriefingResult";
 
-export default function HomeView() {
+export default function HomeView({
+  availability,
+}: {
+  availability: AiAvailability;
+}) {
   const [result, setResult] = useState<BriefingResult | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -96,7 +100,11 @@ export default function HomeView() {
               </div>
             </div>
             <div className="card-body">
-              <BriefingForm onResult={setResult} onLog={appendLog} />
+              <BriefingForm
+                availability={availability}
+                onResult={setResult}
+                onLog={appendLog}
+              />
               {logs.length > 0 && <div className="log">{logs.join("\n")}</div>}
             </div>
           </div>

@@ -1,13 +1,14 @@
 // AI 프로바이더 핑 테스트 — 관리자만 사용 (middleware 가 /api/admin 외에는 보호하지 않음)
-// 실제 API 키로 짧은 프롬프트를 호출해 응답 가능 여부를 확인한다.
+// 키는 서버 환경변수에서 해석한다. 짧은 프롬프트를 호출해 응답 가능 여부를 확인한다.
 //
 // 사용:
 //   POST /api/health/ai
-//   Body: { aiModel: AiModel, aiKey: string }
+//   Body: { aiModel: AiModel, tier: "free" | "paid" }
 
 import { NextResponse, type NextRequest } from "next/server";
-import { callAiAnalysis } from "@/lib/ai";
-import type { AiModel, NewsItem } from "@/lib/types";
+import { callAiAnalysis, MODELS } from "@/lib/ai";
+import { resolveAiKey } from "@/lib/ai/keys";
+import type { AiModel, AiTier, NewsItem } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,10 +23,8 @@ const PING_NEWS: NewsItem[] = [
   },
 ];
 
-const VALID_MODELS: AiModel[] = ["gemini", "gemini-flash-latest"];
-
 export async function POST(request: NextRequest) {
-  let body: { aiModel?: unknown; aiKey?: unknown };
+  let body: { aiModel?: unknown; tier?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -36,17 +35,24 @@ export async function POST(request: NextRequest) {
   }
 
   const aiModel = body.aiModel as AiModel;
-  const aiKey = typeof body.aiKey === "string" ? body.aiKey.trim() : "";
+  const tier: AiTier = body.tier === "paid" ? "paid" : "free";
 
-  if (!VALID_MODELS.includes(aiModel)) {
+  if (typeof aiModel !== "string" || !(aiModel in MODELS)) {
     return NextResponse.json(
-      { success: false, error: `알 수 없는 모델: ${aiModel}` },
+      { success: false, error: `알 수 없는 모델: ${String(aiModel)}` },
       { status: 400 },
     );
   }
+
+  const aiKey = resolveAiKey(MODELS[aiModel].provider, tier);
   if (!aiKey) {
     return NextResponse.json(
-      { success: false, error: "aiKey 가 비어 있습니다." },
+      {
+        success: false,
+        aiModel,
+        tier,
+        error: `${tier === "paid" ? "유료" : "무료"} API 키가 서버 환경변수에 설정되지 않았습니다.`,
+      },
       { status: 400 },
     );
   }
@@ -64,6 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       aiModel,
+      tier,
       duration_ms: ms,
       preview: output.substring(0, 200),
     });
@@ -73,6 +80,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         aiModel,
+        tier,
         duration_ms: ms,
         error: (e as Error).message,
       },

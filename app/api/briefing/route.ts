@@ -3,11 +3,13 @@ import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
 import { fetchAllNews } from "@/lib/news";
 import { fetchAllRates } from "@/lib/ecos";
-import { callAiAnalysis } from "@/lib/ai";
+import { callAiAnalysis, MODELS, MODEL_LABELS } from "@/lib/ai";
+import { resolveAiKey, ecosKeyFromEnv } from "@/lib/ai/keys";
 import { extractConclusions } from "@/lib/ai/prompt";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type {
   AiModel,
+  AiTier,
   BriefingParams,
   BriefingResult,
   RateData,
@@ -39,18 +41,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const aiKey = (params.aiKey || "").trim();
   const aiModel: AiModel =
-    params.aiModel === "gemini-flash-latest"
-      ? "gemini-flash-latest"
+    typeof params.aiModel === "string" && params.aiModel in MODELS
+      ? (params.aiModel as AiModel)
       : "gemini";
+  const tier: AiTier = params.tier === "paid" ? "paid" : "free";
   const focusPoint = params.focusPoint?.trim() || "";
-  const ecosKey = params.ecosKey?.trim() || "";
+
+  const aiKey = resolveAiKey(MODELS[aiModel].provider, tier);
+  const ecosKey = ecosKeyFromEnv();
 
   if (!aiKey) {
     return NextResponse.json({
       success: false,
-      error: "AI API 키가 입력되지 않았습니다.",
+      error: `${MODEL_LABELS[aiModel]} (${tier === "paid" ? "유료" : "무료"}) API 키가 서버 환경변수에 설정되지 않았습니다.`,
     });
   }
 

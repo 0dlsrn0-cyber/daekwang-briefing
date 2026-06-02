@@ -1,54 +1,88 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { AiModel, BriefingResult } from "@/lib/types";
+import type {
+  AiAvailability,
+  AiModel,
+  AiTier,
+  BriefingResult,
+} from "@/lib/types";
+import { MODELS } from "@/lib/ai";
 
-const MODEL_OPTIONS: { value: AiModel; label: string }[] = [
-  { value: "gemini", label: "Google Gemini 2.5 Flash" },
-  { value: "gemini-flash-latest", label: "Google Gemini Flash Latest" },
+const MODEL_ORDER: AiModel[] = [
+  "gemini",
+  "gemini-flash-latest",
+  "mistral",
+  "grok",
 ];
 
-function normalizeAiModel(value: string | null): AiModel {
-  return value === "gemini-flash-latest" ? "gemini-flash-latest" : "gemini";
-}
-
 interface Props {
+  availability: AiAvailability;
   onResult: (r: BriefingResult) => void;
   onLog: (line: string) => void;
 }
 
-export default function BriefingForm({ onResult, onLog }: Props) {
-  const [aiModel, setAiModel] = useState<AiModel>("gemini");
-  const [aiKey, setAiKey] = useState("");
-  const [ecosKey, setEcosKey] = useState("");
+export default function BriefingForm({ availability, onResult, onLog }: Props) {
+  // 사용 가능한 모델 = 프로바이더에 무료/유료 키 중 하나라도 설정된 것
+  const usableModels = MODEL_ORDER.filter((m) => {
+    const a = availability[MODELS[m].provider];
+    return a && (a.free || a.paid);
+  });
+
+  const [aiModel, setAiModel] = useState<AiModel>(usableModels[0] ?? "gemini");
+  const [tier, setTier] = useState<AiTier>("free");
   const [focusPoint, setFocusPoint] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
 
+  function tiersFor(m: AiModel) {
+    return availability[MODELS[m].provider] ?? { free: false, paid: false };
+  }
+
+  // 선호 요금제가 없으면 설정된 다른 요금제로 보정
+  function pickTier(m: AiModel, preferred: AiTier): AiTier {
+    const a = tiersFor(m);
+    if (a[preferred]) return preferred;
+    return a.free ? "free" : "paid";
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const savedModel = normalizeAiModel(sessionStorage.getItem("aiModel"));
-    setAiModel(savedModel);
-    sessionStorage.setItem("aiModel", savedModel);
-    setAiKey(sessionStorage.getItem("aiKey") || "");
-    setEcosKey(sessionStorage.getItem("ecosKey") || "");
+    const savedModel = sessionStorage.getItem("aiModel") as AiModel | null;
+    const savedTier = sessionStorage.getItem("aiTier") as AiTier | null;
+    const model =
+      savedModel && usableModels.includes(savedModel)
+        ? savedModel
+        : usableModels[0] ?? "gemini";
+    const t = pickTier(model, savedTier === "paid" ? "paid" : "free");
+    setAiModel(model);
+    setTier(t);
+    sessionStorage.setItem("aiModel", model);
+    sessionStorage.setItem("aiTier", t);
     setFocusPoint(sessionStorage.getItem("focusPoint") || "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function persist(name: string, value: string) {
-    if (typeof window !== "undefined") sessionStorage.setItem(name, value);
+  function changeModel(m: AiModel) {
+    const t = pickTier(m, tier);
+    setAiModel(m);
+    setTier(t);
+    sessionStorage.setItem("aiModel", m);
+    sessionStorage.setItem("aiTier", t);
+  }
+
+  function changeTier(t: AiTier) {
+    if (!tiersFor(aiModel)[t]) return;
+    setTier(t);
+    sessionStorage.setItem("aiTier", t);
   }
 
   async function handleRun(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!aiKey.trim()) {
-      setError("AI API 키를 입력해 주세요.");
-      return;
-    }
     setRunning(true);
     onLog("브리핑 실행을 시작합니다…");
-    onLog(`모델: ${aiModel}`);
+    onLog(`모델: ${MODELS[aiModel].label} (${tier === "paid" ? "유료" : "무료"})`);
     onLog("뉴스 수집 + ECOS 금리 + AI 분석 (최대 약 30~40초 소요)");
 
     try {
@@ -56,10 +90,9 @@ export default function BriefingForm({ onResult, onLog }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          aiKey: aiKey.trim(),
           aiModel,
+          tier,
           focusPoint: focusPoint.trim(),
-          ecosKey: ecosKey.trim(),
         }),
       });
       const data: BriefingResult = await res.json();
@@ -78,63 +111,74 @@ export default function BriefingForm({ onResult, onLog }: Props) {
     }
   }
 
+  if (usableModels.length === 0) {
+    return (
+      <div className="alert">
+        사용 가능한 AI 키가 서버에 설정되지 않았습니다. 환경변수
+        (GEMINI/MISTRAL/XAI · ECOS API KEY)를 설정해 주세요.
+      </div>
+    );
+  }
+
+  const avail = tiersFor(aiModel);
+
   return (
     <form onSubmit={handleRun}>
       <div className="form-grid">
         <div className="form-group">
-          <label>AI 모델</label>
+          <label>AI 프로바이더</label>
           <select
             value={aiModel}
-            onChange={(e) => {
-              const v = e.target.value as AiModel;
-              setAiModel(v);
-              persist("aiModel", v);
-            }}
+            onChange={(e) => changeModel(e.target.value as AiModel)}
             disabled={running}
           >
-            {MODEL_OPTIONS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
+            {usableModels.map((m) => (
+              <option key={m} value={m}>
+                {MODELS[m].label}
               </option>
             ))}
           </select>
           <span className="input-hint">
-            최신 alias는 Google이 Flash 계열 최신 모델로 자동 연결합니다.
+            API 키는 서버 환경변수로 관리됩니다 (브라우저에 저장하지 않음).
           </span>
         </div>
 
         <div className="form-group">
-          <label>AI API 키</label>
-          <input
-            type="password"
-            value={aiKey}
-            onChange={(e) => {
-              setAiKey(e.target.value);
-              persist("aiKey", e.target.value);
-            }}
-            placeholder="예: AIzaSy..."
-            disabled={running}
-            required
-          />
+          <label>요금제</label>
+          <div className="tier-toggle" role="radiogroup" aria-label="요금제">
+            <label
+              className={`tier-option${tier === "free" ? " is-active" : ""}${
+                !avail.free ? " is-disabled" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="tier"
+                value="free"
+                checked={tier === "free"}
+                disabled={running || !avail.free}
+                onChange={() => changeTier("free")}
+              />
+              무료
+            </label>
+            <label
+              className={`tier-option${tier === "paid" ? " is-active" : ""}${
+                !avail.paid ? " is-disabled" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="tier"
+                value="paid"
+                checked={tier === "paid"}
+                disabled={running || !avail.paid}
+                onChange={() => changeTier("paid")}
+              />
+              유료
+            </label>
+          </div>
           <span className="input-hint">
-            세션 동안만 브라우저에 저장됨 (서버 저장 안 함).
-          </span>
-        </div>
-
-        <div className="form-group">
-          <label>ECOS API 키 (선택)</label>
-          <input
-            type="password"
-            value={ecosKey}
-            onChange={(e) => {
-              setEcosKey(e.target.value);
-              persist("ecosKey", e.target.value);
-            }}
-            placeholder="한국은행 ECOS API 키"
-            disabled={running}
-          />
-          <span className="input-hint">
-            입력 시 11대 금리·심리 지표가 분석에 통합됩니다.
+            설정된 키가 있는 요금제만 선택할 수 있습니다.
           </span>
         </div>
 
@@ -145,7 +189,8 @@ export default function BriefingForm({ onResult, onLog }: Props) {
             value={focusPoint}
             onChange={(e) => {
               setFocusPoint(e.target.value);
-              persist("focusPoint", e.target.value);
+              if (typeof window !== "undefined")
+                sessionStorage.setItem("focusPoint", e.target.value);
             }}
             placeholder="예: 1기 신도시 재건축, PF 만기 도래 영향"
             disabled={running}

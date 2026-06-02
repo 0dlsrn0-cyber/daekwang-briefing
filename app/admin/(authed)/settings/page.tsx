@@ -1,6 +1,7 @@
 import SettingsView from "./SettingsView";
 import AiHealthCheck from "./AiHealthCheck";
 import { getStoredAccessKey } from "@/lib/access-key-store";
+import { aiAvailability } from "@/lib/ai/keys";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export default async function AdminSettingsPage() {
       )}
 
       <SettingsView initialKey={currentKey} />
-      <AiHealthCheck />
+      <AiHealthCheck availability={aiAvailability()} />
     </div>
   );
 }

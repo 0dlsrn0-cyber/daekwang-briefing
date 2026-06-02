@@ -1,4 +1,10 @@
-export type AiModel = "gemini" | "gemini-flash-latest";
+export type AiModel = "gemini" | "gemini-flash-latest" | "mistral" | "grok";
+
+export type AiTier = "free" | "paid";
+
+export type AiProvider = "gemini" | "mistral" | "grok";
+
+export type AiAvailability = Record<AiProvider, { free: boolean; paid: boolean }>;
 
 export interface NewsItem {
   category: string;
@@ -83,8 +89,7 @@ export interface BriefingResult {
 }
 
 export interface BriefingParams {
-  aiKey: string;
   aiModel: AiModel;
+  tier: AiTier;
   focusPoint?: string;
-  ecosKey?: string;
 }
