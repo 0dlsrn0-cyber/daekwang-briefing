@@ -16,7 +16,7 @@ export async function callOpenAiCompat(
       model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
-      max_tokens: 8192,
+      max_tokens: 16384,
     }),
   });
   if (!res.ok) throw new Error(`${model} API 오류: ${await res.text()}`);

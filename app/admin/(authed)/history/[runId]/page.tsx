@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { MODEL_LABELS } from "@/lib/ai";
+import { normalizeReport } from "@/lib/markdown";
 import EcosDashboard from "@/components/EcosDashboard";
 import NewsTabs from "@/components/NewsTabs";
 import ReportSections from "@/components/ReportSections";
@@ -187,7 +188,7 @@ export default async function HistoryDetailPage({
             </div>
           </div>
           <div className="card-body">
-            <ReportSections aiReport={report.ai_report} />
+            <ReportSections aiReport={normalizeReport(report.ai_report)} />
 
             {report.rate_snapshot?.success && (
               <EcosDashboard rateData={report.rate_snapshot} />

@@ -1,5 +1,6 @@
 import type { AiModel, AiProvider, NewsItem, RateData } from "../types";
 import { buildPrompt } from "./prompt";
+import { normalizeReport } from "../markdown";
 import { callGemini } from "./gemini";
 import { callOpenAiCompat } from "./openai-compat";
 
@@ -52,13 +53,18 @@ export async function callAiAnalysis(
   const prompt = buildPrompt(newsList, focusPoint, rateData, previousSummary);
   const def = MODELS[aiModel] ?? MODELS.gemini;
 
+  let raw: string;
   switch (def.provider) {
     case "mistral":
-      return callOpenAiCompat(MISTRAL_URL, aiKey, def.apiModel, prompt);
+      raw = await callOpenAiCompat(MISTRAL_URL, aiKey, def.apiModel, prompt);
+      break;
     case "grok":
-      return callOpenAiCompat(GROK_URL, aiKey, def.apiModel, prompt);
+      raw = await callOpenAiCompat(GROK_URL, aiKey, def.apiModel, prompt);
+      break;
     case "gemini":
     default:
-      return callGemini(aiKey, prompt, def.apiModel);
+      raw = await callGemini(aiKey, prompt, def.apiModel);
+      break;
   }
+  return normalizeReport(raw);
 }
