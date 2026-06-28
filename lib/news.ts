@@ -4,8 +4,8 @@ import { fetchArticleBody } from "./article-body";
 export const AI_DX_CATEGORY = "부동산 AI/DX";
 const BODY_PER_CATEGORY = 5;
 const PER_CATEGORY_MAX = 12;
-// 발행 24시간 이내 기사만 사용(엄격). 48h 등으로 넓히려면 이 값만 조정.
-const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+// 발행 36시간 이내 기사만 사용. 윈도우는 이 값만 조정(예: 24h/48h).
+const MAX_AGE_MS = 36 * 60 * 60 * 1000;
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
