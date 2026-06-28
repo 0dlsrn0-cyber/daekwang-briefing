@@ -4,6 +4,8 @@ import { fetchArticleBody } from "./article-body";
 export const AI_DX_CATEGORY = "부동산 AI/DX";
 const BODY_PER_CATEGORY = 5;
 const PER_CATEGORY_MAX = 12;
+// 발행 24시간 이내 기사만 사용(엄격). 48h 등으로 넓히려면 이 값만 조정.
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
@@ -59,6 +61,31 @@ function isRelevant(title: string): boolean {
   if (!strong && !EXTRA_RE.test(title)) return false; // 도메인 신호 자체가 없음
   if (HARD_NOISE_RE.test(title) && !strong) return false; // 강한 부동산 신호 없는 시장·생활 잡음
   return true;
+}
+
+// ── 최신성 필터 ─────────────────────────────────────────────
+// 네이버는 pubDate(RFC822) 제공. 다음은 미제공이지만 기사 URL
+// (v.daum.net/v/<YYYYMMDDHHMMSS>...)에 발행시각(KST)이 박혀 있어 그걸 쓴다.
+// 발행시각을 못 구하면 최신순 정렬에 맡기고 통과(포맷 변동 시 전량 누락 방지).
+function articleTimeMs(item: RawItem): number | null {
+  if (item.pubDate) {
+    const t = Date.parse(item.pubDate);
+    if (!Number.isNaN(t)) return t;
+  }
+  const m = item.link.match(/v\.daum\.net\/v\/(\d{14})/);
+  if (m) {
+    const s = m[1];
+    const iso = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}+09:00`;
+    const t = Date.parse(iso);
+    if (!Number.isNaN(t)) return t;
+  }
+  return null;
+}
+
+function isFresh(item: RawItem): boolean {
+  const ms = articleTimeMs(item);
+  if (ms == null) return true; // 발행시각 미상 → 최신순 정렬에 위임
+  return Date.now() - ms <= MAX_AGE_MS;
 }
 
 function decodeEntities(s: string): string {
@@ -191,6 +218,7 @@ export async function fetchAllNews(): Promise<NewsResult> {
     let count = 0;
     for (const it of merged) {
       if (!isRelevant(it.title)) continue;
+      if (!isFresh(it)) continue;
       const key = normTitle(it.title);
       if (!key || seen.has(key)) continue;
       seen.add(key);
