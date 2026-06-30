@@ -2,10 +2,12 @@ import type { NewsItem, NewsResult } from "./types";
 import { fetchArticleBody } from "./article-body";
 
 export const AI_DX_CATEGORY = "부동산 AI/DX";
-const BODY_PER_CATEGORY = 5;
+// 관련성(LLM) 판정·분석이 제목이 아닌 본문을 읽도록 후보 본문을 폭넓게 확보한다.
+// jina 부하·300s 한도를 감안해 점수 상위 이 건수까지만 수집(초과분은 제목으로만 판단).
+const BODY_FETCH_MAX = 45;
 const PER_CATEGORY_MAX = 12;
-// 발행 36시간 이내 기사만 사용. 윈도우는 이 값만 조정(예: 24h/48h).
-const MAX_AGE_MS = 36 * 60 * 60 * 1000;
+// 발행 24시간 이내 기사만 사용(엄격). 윈도우는 이 값만 조정(예: 36h/48h).
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
@@ -232,29 +234,36 @@ export async function fetchAllNews(): Promise<NewsResult> {
     }
   }
 
-  // 본문 수집 대상: 카테고리별 중요도 상위 (AI/DX 제외)
-  const bodyTargets: NewsItem[] = [];
-  for (const c of CATEGORY_QUERIES) {
-    if (c.category === AI_DX_CATEGORY) continue;
-    const items = allNews
-      .filter((n) => n.category === c.category)
-      .sort((a, b) => scoreNews(b.title) - scoreNews(a.title));
-    bodyTargets.push(...items.slice(0, BODY_PER_CATEGORY));
+  // 본문 수집 대상: AI/DX(이메일 하단 별도 블록)를 뺀 후보 전체를 점수순으로
+  // 상한(BODY_FETCH_MAX)까지. 관련성 판정·분석이 본문을 읽도록 폭넓게 확보한다.
+  const bodyPool = allNews
+    .filter((n) => n.category !== AI_DX_CATEGORY)
+    .sort((a, b) => scoreNews(b.title) - scoreNews(a.title));
+  if (bodyPool.length > BODY_FETCH_MAX) {
+    errors.push(
+      `본문수집 상한(${BODY_FETCH_MAX}) 초과 — ${bodyPool.length - BODY_FETCH_MAX}건은 제목으로만 판단됨`,
+    );
   }
   await Promise.all(
-    bodyTargets.map(async (item) => {
+    bodyPool.slice(0, BODY_FETCH_MAX).map(async (item) => {
       const body = await fetchArticleBody(item.link);
       if (body) item.body = body;
     }),
   );
 
-  // 오늘의 핵심 기사: 본문 확보된 기사 중 점수 상위 (최대 2건)
-  const bodied = allNews
+  markLeadArticles(allNews);
+
+  return { success: allNews.length > 0, news: allNews, errors };
+}
+
+// 오늘의 핵심 기사(lead): 본문 확보된 기사 중 점수 상위 최대 2건.
+// 관련성 필터로 기사 집합이 바뀌면 라우트에서 다시 적용한다.
+export function markLeadArticles(news: NewsItem[]): void {
+  for (const n of news) n.isLead = false;
+  const bodied = news
     .filter((n) => n.body && n.body.trim())
     .sort((a, b) => scoreNews(b.title) - scoreNews(a.title));
   for (const n of bodied.slice(0, 2)) {
     if (scoreNews(n.title) > 0) n.isLead = true;
   }
-
-  return { success: allNews.length > 0, news: allNews, errors };
 }

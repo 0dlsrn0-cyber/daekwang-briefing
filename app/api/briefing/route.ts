@@ -1,9 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createHash } from "node:crypto";
-import { fetchAllNews } from "@/lib/news";
+import { fetchAllNews, markLeadArticles } from "@/lib/news";
 import { fetchAllRates } from "@/lib/ecos";
-import { callAiAnalysis, MODELS, MODEL_LABELS } from "@/lib/ai";
+import {
+  callAiAnalysis,
+  selectRelevantNews,
+  MODELS,
+  MODEL_LABELS,
+} from "@/lib/ai";
 import { resolveAiKey, ecosKeyFromEnv } from "@/lib/ai/keys";
 import { extractConclusions } from "@/lib/ai/prompt";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -116,6 +121,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 하이브리드 관련성 필터 2단계: LLM이 제목+본문을 읽고 관련 기사만 남긴다.
+    // 실패·공집합이면 selectRelevantNews가 키워드 결과를 그대로 돌려준다.
+    let relevantNews = newsResult.news;
+    try {
+      relevantNews = await selectRelevantNews(aiKey, aiModel, newsResult.news);
+    } catch (e) {
+      console.error("[relevance] 관련성 필터 실패, 키워드 결과 사용:", e);
+    }
+    markLeadArticles(relevantNews);
+
     let rateData: RateData | null = null;
     if (ecosKey) {
       try {
@@ -155,7 +170,7 @@ export async function POST(request: NextRequest) {
       aiReport = await callAiAnalysis(
         aiKey,
         aiModel,
-        newsResult.news,
+        relevantNews,
         focusPoint,
         rateData,
         previousSummary,
@@ -172,7 +187,7 @@ export async function POST(request: NextRequest) {
     // DB 기록 (실패해도 응답은 그대로 반환)
     if (supabase && runId) {
       const rid = runId;
-      const newsRows = newsResult.news.map((n) => ({
+      const newsRows = relevantNews.map((n) => ({
         run_id: rid,
         category: n.category,
         title: n.title,
@@ -189,7 +204,7 @@ export async function POST(request: NextRequest) {
           run_id: rid,
           ai_report: aiReport,
           rate_snapshot: rateData ?? null,
-          news_count: newsResult.news.length,
+          news_count: relevantNews.length,
           conclusions_3lines: conclusions,
         }),
       );
@@ -203,10 +218,10 @@ export async function POST(request: NextRequest) {
 
     const result: BriefingResult = {
       success: true,
-      news: newsResult.news,
+      news: relevantNews,
       aiReport,
       ts,
-      newsCount: newsResult.news.length,
+      newsCount: relevantNews.length,
       focusPoint,
       rateData,
       aiModel,
