@@ -3,7 +3,8 @@ import { MODEL_LABELS } from "../ai";
 import { AI_DX_CATEGORY } from "../news";
 import type { BriefingResult, NewsItem } from "../types";
 
-// 웹과 통일된 Anthropic 톤 (globals.css 토큰과 동기화)
+// 코워크브리핑 정본 디자인 (cowork-briefing/tools/render_email.mjs) 이식.
+// 이메일 클라이언트 호환: table 레이아웃 + 인라인 style + 색 배경 td에 bgcolor 중복 지정.
 const C = {
   cream50: "#faf9f5",
   cream100: "#f5f1e8",
@@ -25,8 +26,14 @@ const C = {
   danger: "#b03a2e",
 };
 
+const BAND = "#231916"; // 진한 브랜드 강조색 (헤더 제목 띠 · 푸터)
+const BAND_EYE = "#d99a6c"; // 띠 위 eyebrow (라이트 테라)
+const BAND_SUB = "#b5a99a"; // 띠 부제 (뮤트)
+const STRIP = "#8a6d4b"; // 헤더 상단 얇은 줄
+
 const FONT_STACK =
   "'Noto Sans KR','Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif";
+const WORDMARK_FONT = "Georgia,'Times New Roman',serif";
 
 const CSI_KEYS_MAP: Record<string, boolean> = {
   csi: true,
@@ -34,13 +41,21 @@ const CSI_KEYS_MAP: Record<string, boolean> = {
   ccsi: true,
 };
 
-// 고정 폭(680px) 디자인. 모바일에서는 클라이언트 줌으로 본다 (반응형 미적용).
 const BASE_CSS = `
   body { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
   table { border-collapse: collapse !important; }
   img { -ms-interpolation-mode: bicubic; }
   a { text-decoration: none; }
 `;
+
+// 이메일 안전 로고: 텍스트 워드마크 (base64 이미지는 Gmail 미표시 위험)
+function logoWordmark(color: string, size = 30): string {
+  const small = Math.round(size * 0.8);
+  return (
+    `<span style="font-family:${WORDMARK_FONT};font-size:${size}px;font-weight:700;color:${color};letter-spacing:2px;">` +
+    `L<span style="font-size:${small}px;">OGEBIEN</span></span>`
+  );
+}
 
 export function buildBriefingEmailHtml(result: BriefingResult): string {
   const news = result.news || [];
@@ -53,99 +68,94 @@ export function buildBriefingEmailHtml(result: BriefingResult): string {
   const modelLabel = aiModel
     ? MODEL_LABELS[aiModel] || String(aiModel)
     : "AI 분석 엔진";
-  const today = (ts || "").split(" ")[0] || ts;
+  const today = (ts || "").split(/[ T]/)[0] || ts;
   const hasEcos = !!(rateData && rateData.success && rateData.rates);
 
   const newsHtml = renderNewsHtml(news);
   const rateHtml = hasEcos ? renderRateHtml(rateData!) : "";
   const reportHtml = renderReportHtml(aiReport);
 
+  const ecosBlock = hasEcos
+    ? `<div style="margin-bottom:16px;background-color:${C.cream50};border:1px solid ${C.cream300};border-radius:12px;padding:22px 24px;overflow:hidden;">` +
+      `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:6px;text-transform:uppercase;">ECOS · 한국은행 11대 지표</div>` +
+      `<div style="font-size:11px;color:${C.ink400};margin-bottom:16px;">${rateData?.fetchedAt || today} 기준</div>` +
+      rateHtml +
+      `</div>`
+    : "";
+
+  const newsBlock =
+    `<div style="margin-bottom:16px;background-color:${C.cream50};border:1px solid ${C.cream300};border-radius:12px;padding:24px 26px;overflow:hidden;">` +
+    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">수집 뉴스 원문 <span style="color:${C.ink400};font-weight:500;margin-left:6px;letter-spacing:0.5px;">· 총 ${newsCount}건</span></div>` +
+    newsHtml +
+    `</div>`;
+
   return [
     `<!DOCTYPE html><html lang="ko"><head>`,
     `<meta charset="UTF-8">`,
-    `<meta name="viewport" content="width=680,initial-scale=1,user-scalable=yes">`,
+    `<meta name="viewport" content="width=860,initial-scale=1,user-scalable=yes">`,
     `<meta name="x-apple-disable-message-reformatting">`,
     `<meta http-equiv="X-UA-Compatible" content="IE=edge">`,
     `<title>대광 로제비앙 부동산 동향 브리핑</title>`,
     `<style>${BASE_CSS}</style>`,
     `</head>`,
-    `<body style="margin:0;padding:0;background:${C.cream100};font-family:${FONT_STACK};color:${C.ink800};-webkit-font-smoothing:antialiased;">`,
+    `<body style="margin:0;padding:0;background-color:${C.cream100};font-family:${FONT_STACK};color:${C.ink800};-webkit-font-smoothing:antialiased;">`,
 
     // 받은편지함 미리보기 텍스트
     `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;color:${C.cream100};">부동산 동향 심층 분석 브리핑 · ${today} · 수집 뉴스 ${newsCount}건${hasEcos ? " · ECOS 11대 지표" : ""}</div>`,
 
-    // 바깥 래퍼
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.cream100};">`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.cream100};">`,
     `<tr><td align="center" style="padding:28px 16px;">`,
-    `<table role="presentation" class="container" width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;min-width:680px;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;word-break:keep-all;">`,
 
-    // [1] HEADER
-    `<tr><td class="px-outer py-block" style="padding:36px 40px 28px;background:${C.cream200};">`,
-    `<table class="header-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
-    `<td valign="top">`,
-    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;">DAEKWANG · LOGEBIEN</div>`,
-    `<div class="h1" style="font-size:26px;font-weight:700;color:${C.ink900};letter-spacing:-1px;line-height:1.2;margin-bottom:8px;white-space:nowrap;">부동산 동향 심층 분석 브리핑</div>`,
-    `<div style="font-size:13px;color:${C.ink500};letter-spacing:0.2px;">Real Estate Market Intelligence Report</div>`,
-    `</td>`,
-    `<td class="right-meta" valign="top" align="right" width="140" style="padding-left:16px;width:140px;">`,
-    `<div style="font-size:10px;color:${C.ink400};letter-spacing:1.8px;font-weight:600;margin-bottom:4px;">REPORT DATE</div>`,
-    `<div style="font-size:15px;color:${C.ink800};font-weight:700;letter-spacing:-0.3px;">${today}</div>`,
-    `</td>`,
-    `</tr></table>`,
+    // ===== 헤더 860 (자체 라운드 배너) =====
+    `<table role="presentation" width="860" cellpadding="0" cellspacing="0" border="0" style="width:860px;max-width:100%;border:1px solid ${C.cream300};border-radius:14px;overflow:hidden;word-break:keep-all;">`,
+    `<tr><td bgcolor="${STRIP}" style="background-color:${STRIP};height:6px;line-height:6px;font-size:0;">&nbsp;</td></tr>`,
+    `<tr><td bgcolor="#ffffff" style="background-color:#ffffff;padding:22px 40px;">`,
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>`,
+    `<td valign="middle" align="left">${logoWordmark("#a9834e", 30)}</td>`,
+    `<td valign="middle" align="right">`,
+    `<div style="font-size:11px;color:${C.terra700};letter-spacing:2px;font-weight:700;">DAILY BRIEFING</div>`,
+    `<div style="font-size:16px;color:${C.ink900};font-weight:700;margin-top:3px;letter-spacing:-0.2px;">${today}</div>`,
+    `</td></tr></table>`,
     `</td></tr>`,
+    `<tr><td bgcolor="${BAND}" style="background-color:${BAND};padding:30px 40px 28px;">`,
+    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${BAND_EYE};letter-spacing:3px;margin-bottom:10px;">AI DEEP ANALYSIS REPORT</div>`,
+    `<div class="h1" style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-1px;line-height:1.2;">부동산 동향 심층 분석 브리핑</div>`,
+    `<div style="font-size:13px;color:${BAND_SUB};margin-top:9px;">수집 뉴스 ${newsCount}건${hasEcos ? " · 한국은행 ECOS 11대 지표" : ""} · 대광그룹 주택관리팀</div>`,
+    `</td></tr>`,
+    `</table>`,
 
-    // [3] AI REPORT
-    `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
-    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;"><tr>`,
-    `<td valign="middle"><span style="display:inline-block;background:${C.ink800};color:${C.cream50};border-radius:4px;padding:5px 11px;font-size:10px;font-weight:700;letter-spacing:1.5px;white-space:nowrap;">AI DEEP ANALYSIS REPORT</span></td>`,
-    `<td valign="middle" align="right"><span style="display:inline-block;background:${C.ink800};color:${C.cream50};border-radius:4px;padding:5px 11px;font-size:10px;font-weight:700;letter-spacing:1.2px;white-space:nowrap;">대광그룹 주택관리팀</span></td>`,
-    `</tr></table>`,
+    // ===== 본문: 흰 박스 wrapper 없이 780 폭 카드들이 배경 위에 나열 =====
+    `<table role="presentation" class="container" width="780" cellpadding="0" cellspacing="0" border="0" style="width:780px;max-width:100%;word-break:keep-all;">`,
+    `<tr><td style="padding:20px 0 4px;">`,
     reportHtml,
+    ecosBlock,
+    `<div style="margin-bottom:16px;">${renderAiDxHtml(news)}</div>`,
+    newsBlock,
     `</td></tr>`,
+    `</table>`,
 
-    // [4] ECOS
-    hasEcos
-      ? `<tr><td class="px-outer" style="padding:0 40px 30px;">` +
-        `<div style="height:1px;background:${C.cream300};margin-bottom:26px;"></div>` +
-        `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:14px;text-transform:uppercase;">ECOS · 한국은행 11대 지표</div>` +
-        `<div style="font-size:11px;color:${C.ink400};margin-bottom:14px;">${rateData?.fetchedAt || today} 기준</div>` +
-        rateHtml +
-        `</td></tr>`
-      : "",
-
-    // [5] AI/DX SIGNAL (항상 노출)
-    `<tr><td class="px-outer" style="padding:0 40px 30px;">${renderAiDxHtml(news)}</td></tr>`,
-
-    // [6] divider
-    `<tr><td class="px-outer" style="padding:0 40px;"><div style="height:1px;background:${C.cream300};"></div></td></tr>`,
-
-    // [7] NEWS
-    `<tr><td class="px-outer py-block" style="padding:30px 40px;">`,
-    `<div class="eyebrow" style="font-size:11px;font-weight:700;color:${C.terra700};letter-spacing:2.2px;margin-bottom:20px;text-transform:uppercase;">수집 뉴스 원문 <span style="color:${C.ink400};font-weight:500;margin-left:6px;letter-spacing:0.5px;">· 총 ${newsCount}건</span></div>`,
-    newsHtml,
-    `</td></tr>`,
-
-    // [7] FOOTER
-    `<tr><td class="px-outer" style="padding:28px 40px;background:${C.cream200};">`,
+    // ===== 푸터 860 (진한 배너) =====
+    `<table role="presentation" width="860" cellpadding="0" cellspacing="0" border="0" style="width:860px;max-width:100%;background-color:${BAND};border-radius:14px;overflow:hidden;word-break:keep-all;">`,
+    `<tr><td bgcolor="${BAND}" style="background-color:${BAND};padding:28px 40px;">`,
     `<table class="footer-row" role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>`,
     `<td valign="top">`,
-    `<div style="font-size:18px;font-weight:700;color:${C.ink800};letter-spacing:-0.5px;margin-bottom:4px;">대광<span style="color:${C.terra600};">로제비앙</span></div>`,
-    `<div style="font-size:11px;color:${C.ink500};line-height:1.7;">대광그룹 주택관리팀<br>Daekwang Group · Housing Management Team</div>`,
+    `<div style="margin-bottom:8px;">${logoWordmark("#c9a978", 24)}</div>`,
+    `<div style="font-size:11px;color:${BAND_SUB};line-height:1.7;">대광그룹 주택관리팀<br>Daekwang Group · Housing Management Team</div>`,
     `</td>`,
     `<td class="footer-right" valign="top" align="right" style="padding-left:16px;">`,
     `<div style="margin-bottom:10px;">`,
-    `<span style="display:inline-block;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.ink700};font-weight:600;margin:0 0 4px 4px;">수집 ${newsCount}건</span>`,
-    `<span style="display:inline-block;background:${C.cream50};border:1px solid ${C.cream300};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.ink700};font-weight:600;margin:0 0 4px 4px;">${modelLabel}</span>`,
+    `<span style="display:inline-block;background-color:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);border-radius:14px;padding:3px 10px;font-size:10px;color:#efe7dc;font-weight:600;margin:0 0 4px 4px;">수집 ${newsCount}건</span>`,
+    `<span style="display:inline-block;background-color:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);border-radius:14px;padding:3px 10px;font-size:10px;color:#efe7dc;font-weight:600;margin:0 0 4px 4px;">${modelLabel}</span>`,
     hasEcos
-      ? `<span style="display:inline-block;background:${C.terra50};border:1px solid ${C.terra100};border-radius:14px;padding:3px 10px;font-size:10px;color:${C.terra700};font-weight:700;margin:0 0 4px 4px;">● ECOS LIVE</span>`
+      ? `<span style="display:inline-block;background-color:rgba(217,151,108,0.18);border:1px solid rgba(217,151,108,0.4);border-radius:14px;padding:3px 10px;font-size:10px;color:${BAND_EYE};font-weight:700;margin:0 0 4px 4px;">● ECOS LIVE</span>`
       : "",
     `</div>`,
-    `<div style="font-size:10px;color:${C.ink500};line-height:1.7;">본 보고서는 네이버·다음 뉴스${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
-    `<div style="font-size:10px;color:${C.ink400};margin-top:10px;letter-spacing:0.5px;">CONFIDENTIAL · INTERNAL USE ONLY · © Daekwang Group</div>`,
+    `<div style="font-size:10px;color:#a89a8c;line-height:1.7;">본 보고서는 네이버·다음 뉴스${hasEcos ? ", 한국은행 ECOS API" : ""} 및 AI가<br>자동 생성한 참고 자료입니다. 단독 의사결정에 활용 금지.</div>`,
+    `<div style="font-size:10px;color:#8a7d6f;margin-top:10px;letter-spacing:0.5px;">CONFIDENTIAL · INTERNAL USE ONLY · © Daekwang Group</div>`,
     `</td></tr></table>`,
     `</td></tr>`,
-
     `</table>`,
+
     `</td></tr></table>`,
     `</body></html>`,
   ].join("");
@@ -163,31 +173,31 @@ function renderAiDxHtml(news: NewsItem[]): string {
             `<tr><td style="padding:11px 0;border-bottom:1px solid ${C.cream300};">` +
             `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
             `<td valign="top" width="32" style="padding-top:2px;">` +
-            `<div style="width:24px;height:24px;background:${C.ink800};color:${C.cream50};border-radius:6px;text-align:center;line-height:24px;font-size:11px;font-weight:700;">${idx + 1}</div>` +
+            `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${C.ink800}" width="24" height="24" align="center" valign="middle" style="width:24px;height:24px;background-color:${C.ink800};color:${C.cream50};border-radius:6px;font-size:11px;font-weight:700;line-height:24px;">${idx + 1}</td></tr></table>` +
             `</td>` +
             `<td valign="top">` +
-            `<a href="${n.link}" style="font-size:14px;color:${C.ink900};text-decoration:none;line-height:1.55;font-weight:600;">${n.title}</a>` +
+            `<a href="${n.link}" target="_blank" rel="noopener noreferrer" style="font-size:14px;color:${C.ink900};text-decoration:none;line-height:1.55;font-weight:600;">${n.title}</a>` +
             `<div style="font-size:11px;color:${C.ink500};line-height:1.7;margin-top:4px;">검토 포인트: 분양 상담, 마케팅 자동화, 원가·공정, 문서 검토, 입지 분석 업무와의 연결성</div>` +
             `</td>` +
             `</tr></table></td></tr>`,
         )
         .join("")
     : `<tr><td style="padding:14px 0;">` +
-      `<div style="background:${C.cream100};border:1px dashed ${C.cream400};border-radius:8px;padding:16px 18px;font-size:13px;color:${C.ink700};line-height:1.7;">` +
+      `<div style="background-color:${C.cream100};border:1px dashed ${C.cream400};border-radius:8px;padding:16px 18px;font-size:13px;color:${C.ink700};line-height:1.7;">` +
       `<strong style="color:${C.ink900};">오늘은 부동산·건설·분양 업무와 직접 연결되는 AI/DX 주요 기사가 확인되지 않았습니다.</strong><br>` +
       `금일 브리핑은 정책, 금리, 분양시장, 원가 리스크 판단을 우선합니다.` +
       `</div></td></tr>`;
 
   return (
-    `<div style="background:${C.cream50};border:1px solid ${C.cream300};border-radius:12px;overflow:hidden;">` +
-    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${C.terra50};">` +
+    `<div style="background-color:${C.cream50};border:1px solid ${C.cream300};border-radius:12px;overflow:hidden;">` +
+    `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:${C.terra50};">` +
     `<tr><td valign="middle" style="padding:14px 18px;">` +
-    `<span style="display:inline-block;background:${C.terra600};color:#ffffff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1.2px;">AI/DX SIGNAL</span>` +
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="display:inline-block;vertical-align:middle;"><tr><td bgcolor="${C.ink800}" style="background-color:${C.ink800};color:#ffffff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1.2px;white-space:nowrap;">AI/DX SIGNAL</td></tr></table>` +
     `<span style="font-size:14px;font-weight:700;color:${C.ink900};margin-left:10px;letter-spacing:-0.3px;">오늘의 부동산 AI/DX 시그널</span>` +
     `</td><td valign="middle" align="right" style="padding:14px 18px;">` +
     `<span style="font-size:11px;color:${hasItems ? C.success : C.ink500};font-weight:700;white-space:nowrap;">${hasItems ? allItems.length + "건 감지" : "직접 관련 기사 없음"}</span>` +
     `</td></tr></table>` +
-    `<div style="padding:4px 18px 16px;background:${C.cream50};">` +
+    `<div style="padding:4px 18px 16px;background-color:${C.cream50};">` +
     `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${itemHtml}</table>` +
     `</div></div>`
   );
@@ -211,7 +221,7 @@ function renderNewsHtml(news: NewsItem[]): string {
             `<tr><td style="padding:11px 0;border-bottom:1px solid ${C.cream300};">` +
             `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
             `<td valign="top" width="32" style="font-size:11px;color:${C.terra600};font-weight:700;padding-top:3px;letter-spacing:0;">${String(rowNum).padStart(2, "0")}</td>` +
-            `<td><a href="${n.link}" class="news-title" style="font-size:14px;color:${C.ink800};text-decoration:none;line-height:1.6;font-weight:500;">${n.title}</a></td>` +
+            `<td><a href="${n.link}" target="_blank" rel="noopener noreferrer" class="news-title" style="font-size:14px;color:${C.ink800};text-decoration:none;line-height:1.6;font-weight:500;">${n.title}</a></td>` +
             `</tr></table></td></tr>`
           );
         })
@@ -219,7 +229,7 @@ function renderNewsHtml(news: NewsItem[]): string {
       return (
         `<div style="margin-bottom:24px;">` +
         `<div style="margin-bottom:8px;">` +
-        `<span style="display:inline-block;width:6px;height:6px;background:${C.terra500};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>` +
+        `<span style="display:inline-block;width:6px;height:6px;background-color:${C.terra500};border-radius:50%;margin-right:8px;vertical-align:middle;"></span>` +
         `<span style="font-size:12px;color:${C.ink800};font-weight:700;letter-spacing:0.2px;vertical-align:middle;">${cat}</span>` +
         `<span style="font-size:11px;color:${C.ink400};font-weight:500;margin-left:8px;vertical-align:middle;">${items.length}건</span>` +
         `</div>` +
@@ -256,7 +266,7 @@ function renderRateHtml(
     for (let j = 0; j < 4; j++) {
       const item = rateItems[i + j];
       if (!item) {
-        html += `<td class="rate-cell" width="25%" style="background:transparent;border:0;"></td>`;
+        html += `<td class="rate-cell" width="25%" style="background-color:transparent;border:0;"></td>`;
         continue;
       }
       const val =
@@ -265,7 +275,7 @@ function renderRateHtml(
           : "N/A";
       const valColor = item.csi ? C.success : C.ink900;
       html +=
-        `<td class="rate-cell" width="25%" style="padding:14px 8px;text-align:center;border:1px solid ${C.cream300};background:${C.cream50};vertical-align:middle;">` +
+        `<td class="rate-cell" width="25%" style="padding:14px 8px;text-align:center;border:1px solid ${C.cream300};background-color:${C.cream50};vertical-align:middle;">` +
         `<div style="font-size:10px;color:${C.ink500};font-weight:600;margin-bottom:6px;letter-spacing:0.3px;">${item.label}</div>` +
         `<div style="font-size:18px;font-weight:700;color:${valColor};line-height:1;letter-spacing:-0.3px;">${val}</div>` +
         `</td>`;
@@ -312,8 +322,8 @@ function renderRateHtml(
         `<tr>` +
         `<td style="padding:9px 10px;font-weight:600;border-bottom:1px solid ${C.cream300};font-size:11px;color:${C.ink800};">${t.label || key}</td>` +
         `<td style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink800};font-weight:600;">${t.current.rate ? t.current.rate + unit : "-"}</td>` +
-        `<td class="trend-hide" style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago3m ? t.ago3m.rate + unit : "-"}</td>` +
-        `<td class="trend-hide" style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago12m ? t.ago12m.rate + unit : "-"}</td>` +
+        `<td style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago3m ? t.ago3m.rate + unit : "-"}</td>` +
+        `<td style="text-align:right;border-bottom:1px solid ${C.cream300};padding:9px 10px;font-size:11px;color:${C.ink500};">${t.ago12m ? t.ago12m.rate + unit : "-"}</td>` +
         colorDelta(d3) +
         colorDelta(d12) +
         `</tr>`;
@@ -322,12 +332,12 @@ function renderRateHtml(
     html +=
       `<div style="margin-top:24px;">` +
       `<div style="font-size:11px;font-weight:700;color:${C.ink700};margin-bottom:10px;letter-spacing:0.5px;">지표 변화 추이 <span style="color:${C.ink400};font-weight:500;">(3M · 12M 전 대비)</span></div>` +
-      `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;background:${C.cream50};border:1px solid ${C.cream300};">` +
-      `<tr style="background:${C.cream200};">` +
+      `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;background-color:${C.cream50};border:1px solid ${C.cream300};">` +
+      `<tr style="background-color:${C.cream200};">` +
       `<th style="padding:9px 10px;text-align:left;color:${C.ink700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">지표</th>` +
       `<th style="padding:9px 10px;text-align:right;color:${C.ink700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">현재</th>` +
-      `<th class="trend-hide" style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">3M 전</th>` +
-      `<th class="trend-hide" style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">12M 전</th>` +
+      `<th style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">3M 전</th>` +
+      `<th style="padding:9px 10px;text-align:right;color:${C.ink500};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">12M 전</th>` +
       `<th style="padding:9px 10px;text-align:right;color:${C.terra700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">Δ3M</th>` +
       `<th style="padding:9px 10px;text-align:right;color:${C.terra700};font-size:10px;font-weight:700;border-bottom:1px solid ${C.cream300};letter-spacing:0.3px;">Δ12M</th>` +
       `</tr>` +
@@ -350,8 +360,8 @@ function renderRateHtml(
           r === 0
             ? loan / n
             : (loan * (r * Math.pow(1 + r, n))) / (Math.pow(1 + r, n) - 1);
-        dsrHeaders += `<th style="padding:10px 8px;text-align:center;border:1px solid ${C.cream300};font-size:10px;color:${C.ink600};font-weight:600;background:${C.cream200};">분양가 ${pair[1]}</th>`;
-        dsrCells += `<td style="text-align:center;border:1px solid ${C.cream300};padding:14px 8px;font-weight:700;color:${C.ink900};font-size:14px;background:${C.cream50};">월 ${Math.round(monthly / 10000).toLocaleString()}만원</td>`;
+        dsrHeaders += `<th style="padding:10px 8px;text-align:center;border:1px solid ${C.cream300};font-size:10px;color:${C.ink600};font-weight:600;background-color:${C.cream200};">분양가 ${pair[1]}</th>`;
+        dsrCells += `<td style="text-align:center;border:1px solid ${C.cream300};padding:14px 8px;font-weight:700;color:${C.ink900};font-size:14px;background-color:${C.cream50};">월 ${Math.round(monthly / 10000).toLocaleString()}만원</td>`;
       });
       html +=
         `<div style="margin-top:22px;">` +
@@ -402,13 +412,12 @@ function renderReportHtml(aiReport: string): string {
   }
 
   if (sections.length === 0) {
-    return `<div style="font-size:14px;color:${C.ink800};line-height:1.85;padding:22px 24px;background:${C.cream100};border:1px solid ${C.cream300};border-radius:12px;">${emailMdToHtml(aiReport || "")}</div>`;
+    return `<div style="font-size:14px;color:${C.ink800};line-height:1.85;padding:22px 24px;background-color:${C.cream100};border:1px solid ${C.cream300};border-radius:12px;">${emailMdToHtml(aiReport || "")}</div>`;
   }
 
   return sections
     .map((sec, idx) => {
       const isFocus = sec.isFocus;
-      const accentColor = isFocus ? C.terra700 : C.terra600;
       const num = isFocus ? "★" : String(idx + 1).padStart(2, "0");
       const cardBg = isFocus ? C.terra50 : C.cream50;
       const cardBorder = isFocus ? C.terra100 : C.cream300;
@@ -418,31 +427,30 @@ function renderReportHtml(aiReport: string): string {
       const contentHtml = sec.lines
         .map((line) => {
           const t = line.trim();
-          if (!t) return `<div style="height:6px;line-height:6px;font-size:0;">&nbsp;</div>`;
+          if (!t)
+            return `<div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>`;
           if (/^[-─━=]{3,}$/.test(t))
             return `<div style="height:8px;line-height:8px;font-size:0;">&nbsp;</div>`;
           const processed = emailMdToHtml(t).replace(
             /^-\s*(왜[^:]*:|무엇을[^:]*:)/,
-            `- <strong style="color:${accentColor};">$1</strong>`,
+            `- <strong style="color:${C.ink700};">$1</strong>`,
           );
           const isLvl1 =
             /^[가-하]\./.test(t) || /^[①-⑨]/.test(t) || /^\d+\)/.test(t);
           const isLvl2 = /^[-·•]\s/.test(t);
-          if (isLvl1) {
-            return `<div style="margin:8px 0;padding:11px 14px;background:#ffffff;border:1px solid ${C.cream300};border-left:3px solid ${accentColor};border-radius:8px;font-size:14px;color:${C.ink800};line-height:1.75;">${processed}</div>`;
-          }
-          if (isLvl2) {
-            return `<div style="margin:5px 0 5px 14px;font-size:13.5px;color:${C.ink700};line-height:1.7;">${processed}</div>`;
-          }
-          return `<div style="font-size:14px;color:${C.ink800};line-height:1.75;margin:6px 0;">${processed}</div>`;
+          if (isLvl1)
+            return `<div style="margin:10px 0 2px;font-size:14px;color:${C.ink800};line-height:1.9;">${processed}</div>`;
+          if (isLvl2)
+            return `<div style="margin:4px 0 4px 14px;font-size:14px;color:${C.ink800};line-height:1.9;">${processed}</div>`;
+          return `<div style="font-size:14px;color:${C.ink800};line-height:1.9;margin:3px 0;">${processed}</div>`;
         })
         .join("");
 
       return (
-        `<div style="margin-bottom:20px;background:${cardBg};border:1px solid ${cardBorder};border-radius:12px;overflow:hidden;">` +
+        `<div style="margin-bottom:20px;background-color:${cardBg};border:1px solid ${cardBorder};border-radius:12px;overflow:hidden;">` +
         `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>` +
         `<td valign="middle" style="padding:16px 0 14px 18px;width:50px;">` +
-        `<div class="section-num" style="width:34px;height:34px;background:${badgeBg};color:${badgeColor};border-radius:8px;text-align:center;line-height:34px;font-size:${isFocus ? "15" : "13"}px;font-weight:700;letter-spacing:0;">${num}</div>` +
+        `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${badgeBg}" width="34" height="34" align="center" valign="middle" style="width:34px;height:34px;background-color:${badgeBg};color:${badgeColor};border-radius:8px;font-size:${isFocus ? "15" : "13"}px;font-weight:700;line-height:34px;">${num}</td></tr></table>` +
         `</td>` +
         `<td valign="middle" style="padding:16px 18px 14px 12px;">` +
         `<div class="h2" style="font-size:16px;font-weight:700;color:${C.ink900};letter-spacing:-0.3px;line-height:1.4;">${sec.title}</div>` +
