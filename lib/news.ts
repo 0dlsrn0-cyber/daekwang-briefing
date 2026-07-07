@@ -50,17 +50,21 @@ function scoreNews(title: string): number {
 //
 // STRONG: 명백한 부동산·주택 신호 (잡음 단어가 같이 있어도 통과시킨다)
 const STRONG_RE =
-  /부동산|주택|주거|아파트|집값|전세|월세|매매|매물|분양|청약|재건축|재개발|정비사업|선도지구|도심복합|모아타운|신통기획|뉴타운|입주|미분양|분양가|임대|계약갱신|오피스텔|빌라|연립|상가|택지|신도시|그린벨트|개발제한|토지거래허가|토허|국토(교통)?부|\bLH\b|SH공사|역세권|\bGTX\b|시공사|시행사|건설사|디벨로퍼|리츠|REITs|모델하우스|견본주택|주담대|주택담보|전세대출|디딤돌|버팀목|분양권|입주권|종부세|종합부동산세|양도세|양도소득세|증여세|취득세|보유세|재산세|공시지가|공시가격|토지/i;
+  /부동산|주택|주거|아파트|집값|전세|월세|매매|매물|분양|청약|재건축|재개발|재초환|정비사업|선도지구|도심복합|모아타운|신통기획|뉴타운|입주|미분양|분양가|임대|계약갱신|오피스텔|빌라|연립|상가|택지|신도시|그린벨트|개발제한|용적률|공급\s*(대책|확대|방안)|토지거래허가|토허|국토(교통)?부|\bLH\b|SH공사|역세권|\bGTX\b|시공사|시행사|건설사|디벨로퍼|리츠|REITs|모델하우스|견본주택|주담대|주택담보|전세대출|디딤돌|버팀목|분양권|입주권|종부세|종합부동산세|양도세|양도소득세|증여세|취득세|보유세|재산세|공시지가|공시가격|토지/i;
 // EXTRA: 디벨로퍼에 의미 있는 거시·금융·원가·프롭테크 신호 (도메인으로 인정)
+// 반도체·데이터센터·원전은 클러스터·팹·발전소 건설 수주 먹거리 신호라 포함
+// (cowork 정본 화이트리스트 동기화). 순수 업황·주가 잡음은 2차 LLM이 거른다.
 const EXTRA_RE =
-  /\bPF\b|프로젝트\s*파이낸싱|브리지론|공사비|건설|시공능력|자재(값|비|가격)|레미콘|시멘트|기준금리|금통위|한국은행|한은|국고채|회사채|\bDSR\b|\bLTV\b|가계대출|가계부채|환율|원자재|프롭테크|proptech|콘테크/i;
+  /\bPF\b|프로젝트\s*파이낸싱|브리지론|공사비|건설|시공능력|자재(값|비|가격)|레미콘|시멘트|기준금리|금통위|한국은행|한은|국고채|회사채|\bDSR\b|\bLTV\b|가계대출|가계부채|환율|원자재|프롭테크|proptech|콘테크|반도체|데이터센터|원전/i;
 // HARD_NOISE: 증시·생활·스포츠 등 잡음. STRONG 신호가 없으면 제외한다.
 const HARD_NOISE_RE =
-  /코스피|코스닥|증시|주가|증권가|나스닥|다우|S&P|뉴욕증시|코인|비트코인|이더리움|가상자산|암호화폐|반도체|배터리|2차전지|전기차|스포츠|야구|축구|배구|농구|골프|올림픽|월드컵|연예|아이돌|드라마|영화|배우|가수|예능|날씨|기상|폭염|한파|태풍|확진|백신|코로나/i;
+  /코스피|코스닥|증시|주가|증권가|나스닥|다우|S&P|뉴욕증시|코인|비트코인|이더리움|가상자산|암호화폐|배터리|2차전지|전기차|스포츠|야구|축구|배구|농구|골프|올림픽|월드컵|결승골|축제|페스티벌|뮤지컬|콘서트|연예|아이돌|드라마|영화|배우|가수|예능|날씨|기상|폭염|한파|태풍|확진|백신|코로나/i;
 
-function isRelevant(title: string): boolean {
+// AI/DX 카테고리는 화이트리스트 면제(cowork 정본과 동일) — 검색어("건설 AI",
+// "프롭테크")로 입구가 이미 좁아, 잡음 블랙리스트만 걸고 2차 LLM에 맡긴다.
+function isRelevant(title: string, relaxedWhitelist = false): boolean {
   const strong = STRONG_RE.test(title);
-  if (!strong && !EXTRA_RE.test(title)) return false; // 도메인 신호 자체가 없음
+  if (!relaxedWhitelist && !strong && !EXTRA_RE.test(title)) return false; // 도메인 신호 자체가 없음
   if (HARD_NOISE_RE.test(title) && !strong) return false; // 강한 부동산 신호 없는 시장·생활 잡음
   return true;
 }
@@ -219,7 +223,7 @@ export async function fetchAllNews(): Promise<NewsResult> {
     );
     let count = 0;
     for (const it of merged) {
-      if (!isRelevant(it.title)) continue;
+      if (!isRelevant(it.title, c.category === AI_DX_CATEGORY)) continue;
       if (!isFresh(it)) continue;
       const key = normTitle(it.title);
       if (!key || seen.has(key)) continue;
